@@ -6,15 +6,434 @@
     },
     "servers": [
         {
-            "url": "https://domain.dev/v1",
-            "description": "Base URL"
-        },
-        {
-            "url": "http://127.0.0.1:8000/v1",
-            "description": "Local Base URL"
+            "url": "http://127.0.0.1:8000/api/v1",
+            "description": "Local Development"
         }
     ],
     "paths": {
+        "/Admin/Users/LoadData": {
+            "post": {
+                "tags": [
+                    "Admins"
+                ],
+                "summary": "Get all users",
+                "description": "Returns a paginated list of admins with search and sorting capabilities. Includes no, name, username, role, email, supplier_id, and created_at.",
+                "operationId": "fe2b82bd0062a0ed885cb30e2ca12cf1",
+                "requestBody": {
+                    "description": "Optional parameters for filtering and pagination",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "search": {
+                                        "description": "Global search across name, email, and username",
+                                        "type": "string",
+                                        "example": "john"
+                                    },
+                                    "sortColumn": {
+                                        "description": "Column to sort by (namaLengkap, username, email, role, created_at, id)",
+                                        "type": "string",
+                                        "example": "created_at"
+                                    },
+                                    "sortColumnDir": {
+                                        "description": "Sort direction",
+                                        "type": "string",
+                                        "enum": [
+                                            "asc",
+                                            "desc"
+                                        ],
+                                        "example": "desc"
+                                    },
+                                    "pageNumber": {
+                                        "description": "Page number",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "pageSize": {
+                                        "description": "Items per page",
+                                        "type": "integer",
+                                        "example": 15
+                                    },
+                                    "role": {
+                                        "description": "Filter by role (slug or name, case-insensitive)",
+                                        "type": "string",
+                                        "example": "PEMASOK"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data retrieved successfully"
+                                        },
+                                        "statusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "no": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "id": {
+                                                        "type": "string",
+                                                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                    },
+                                                    "firstName": {
+                                                        "type": "string",
+                                                        "example": "John"
+                                                    },
+                                                    "lastName": {
+                                                        "type": "string",
+                                                        "example": "Doe"
+                                                    },
+                                                    "fullName": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "username": {
+                                                        "type": "string",
+                                                        "example": "johndoe"
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "example": "john@example.com"
+                                                    },
+                                                    "role": {
+                                                        "type": "string",
+                                                        "example": "Super Admin"
+                                                    },
+                                                    "roles": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Super Admin"
+                                                                },
+                                                                "slug": {
+                                                                    "type": "string",
+                                                                    "example": "super_admin"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "supplierId": {
+                                                        "type": "string",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "active"
+                                                    },
+                                                    "isSuperAdmin": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "createdAt": {
+                                                        "type": "string",
+                                                        "example": "2025-01-15 10:30:00"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "pageSize": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "totalPages": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/Admin/Users/Create": {
+            "post": {
+                "tags": [
+                    "Admins"
+                ],
+                "summary": "Create a new user",
+                "description": "Create a new user (admin or regular user) based on role. SUPER_ADMIN and ADMIN_PEMASOK will be created in system_users table. Other roles will be created in users table.",
+                "operationId": "5df111057f3363d20b2b5fb7e8d950e7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "namaLengkap",
+                                    "username",
+                                    "email",
+                                    "password",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "namaLengkap": {
+                                        "description": "Full name",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "username": {
+                                        "description": "Username",
+                                        "type": "string",
+                                        "example": "johndoe"
+                                    },
+                                    "email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "description": "Password",
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "example": "password123"
+                                    },
+                                    "role": {
+                                        "description": "Role to assign to the user",
+                                        "type": "string",
+                                        "enum": [
+                                            "SUPER_ADMIN",
+                                            "ADMIN_PEMASOK",
+                                            "KEUANGAN",
+                                            "PEMASOK",
+                                            "KOPERASI",
+                                            "DAPUR"
+                                        ],
+                                        "example": "PEMASOK"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Registration successful"
+                                        },
+                                        "statusCode": {
+                                            "type": "integer",
+                                            "example": 201
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "209": {
+                        "description": "Account already exists",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Account already exists"
+                                        },
+                                        "statusCode": {
+                                            "type": "integer",
+                                            "example": 209
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                }
+            }
+        },
+        "/Admin/Users/Update/{id}": {
+            "post": {
+                "tags": [
+                    "Admins"
+                ],
+                "summary": "Update a user",
+                "description": "Update user information (admin or regular user) by ID",
+                "operationId": "c3c6342e1b7f3d2f3fd5b7b1776ad59f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "namaLengkap",
+                                    "username",
+                                    "email",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "namaLengkap": {
+                                        "description": "Full name",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "username": {
+                                        "description": "Username",
+                                        "type": "string",
+                                        "example": "johndoe"
+                                    },
+                                    "email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "description": "Password (optional)",
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "example": "password123"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "SUPER_ADMIN",
+                                            "ADMIN_PEMASOK",
+                                            "KEUANGAN",
+                                            "PEMASOK",
+                                            "KOPERASI",
+                                            "DAPUR"
+                                        ],
+                                        "example": "PEMASOK"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User updated successfully"
+                                        },
+                                        "statusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/auth/login": {
             "post": {
                 "tags": [
@@ -30,14 +449,13 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "email",
+                                    "identity",
                                     "password"
                                 ],
                                 "properties": {
-                                    "email": {
+                                    "identity": {
                                         "type": "string",
-                                        "format": "email",
-                                        "example": "user@example.com"
+                                        "example": "user@example.com or username"
                                     },
                                     "password": {
                                         "type": "string",
@@ -382,14 +800,14 @@
                 }
             }
         },
-        "/auth/oauth/google": {
-            "get": {
+        "/auth/google/url": {
+            "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Get Google authentication URL",
                 "description": "Get the Google authentication URL.",
-                "operationId": "4cad9f454e139c80557c4b33bc85aeff",
+                "operationId": "308ec57cbe3210544ed7d590169c9711",
                 "responses": {
                     "200": {
                         "description": "Successful operation",
@@ -421,73 +839,6 @@
                                                 }
                                             },
                                             "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/google/login": {
-            "post": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Log in with Google authentication",
-                "description": "Log in with Google authentication.",
-                "operationId": "9f4603884c7ea31616b823f550b12f04",
-                "requestBody": {
-                    "description": "Request body containing authentication code",
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "authCode"
-                                ],
-                                "properties": {
-                                    "authCode": {
-                                        "description": "Authentication code received from Google",
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Successful operation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "description": "Message indicating successful login",
-                                            "type": "string",
-                                            "example": "Login successful"
-                                        },
-                                        "status": {
-                                            "description": "Status of the response",
-                                            "type": "string",
-                                            "example": "success"
-                                        },
-                                        "statusCode": {
-                                            "description": "HTTP status code",
-                                            "type": "string",
-                                            "example": "200"
-                                        },
-                                        "accessToken": {
-                                            "description": "Access token for the user",
-                                            "type": "string",
-                                            "format": "text"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/UserResource"
                                         }
                                     },
                                     "type": "object"
@@ -548,81 +899,6 @@
                                             "description": "HTTP status code",
                                             "type": "integer",
                                             "example": 200
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/422"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/500"
-                    }
-                }
-            }
-        },
-        "/auth/register": {
-            "post": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Register a new user",
-                "description": "Registers a new user with the provided information.",
-                "operationId": "f024dbf1273b8a27c30d428e9c1fb20d",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "name": {
-                                        "description": "User's name",
-                                        "type": "string"
-                                    },
-                                    "email": {
-                                        "description": "User's email",
-                                        "type": "string",
-                                        "format": "email"
-                                    },
-                                    "password": {
-                                        "description": "User's password",
-                                        "type": "string",
-                                        "format": "password"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Registration successful",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Registration successful"
-                                        },
-                                        "status": {
-                                            "type": "string",
-                                            "example": "success"
-                                        },
-                                        "statusCode": {
-                                            "type": "string",
-                                            "example": "201"
-                                        },
-                                        "access-token": {
-                                            "type": "string",
-                                            "example": "your_access_token"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/UserResource"
                                         }
                                     },
                                     "type": "object"
@@ -751,42 +1027,2658 @@
                 }
             }
         },
-        "/user": {
-            "put": {
+        "/finance/list": {
+            "post": {
                 "tags": [
-                    "User"
+                    "Finance"
                 ],
-                "summary": "Update user profile",
-                "description": "Updates the user's name and job title in the profile",
-                "operationId": "updateUserProfile",
+                "summary": "Get all transactions",
+                "description": "Returns a paginated list of financial transactions",
+                "operationId": "4d4b86b52c30db4b1253713af5b4b812",
                 "requestBody": {
-                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/UserUpdateRequest"
+                                "properties": {
+                                    "pageNumber": {
+                                        "description": "Page number",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "pageSize": {
+                                        "description": "Items per page",
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "sortDir": {
+                                        "description": "Sort direction",
+                                        "type": "string",
+                                        "enum": [
+                                            "ASC",
+                                            "DESC"
+                                        ],
+                                        "example": "ASC"
+                                    },
+                                    "sortDirColumn": {
+                                        "description": "Column to sort by",
+                                        "type": "string",
+                                        "example": "id"
+                                    },
+                                    "search": {
+                                        "description": "Global search string",
+                                        "type": "string",
+                                        "example": "PURCHASE"
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
                     }
                 },
                 "responses": {
-                    "204": {
-                        "description": "Profile updated successfully",
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/finance/detail/{id}": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Get transaction detail",
+                "description": "Get detailed information about a specific transaction",
+                "operationId": "defbf975865dafeed996d91e6a49387b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Transaction UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/finance/reports/profit-summary": {
+            "post": {
+                "tags": [
+                    "Finance Reports"
+                ],
+                "summary": "Get profit summary report",
+                "description": "Generate profit summary for a given date range",
+                "operationId": "543aec8f2f14e6fe074f50b0da64b587",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "start_date",
+                                    "end_date"
+                                ],
+                                "properties": {
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-01"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-31"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Report generated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/finance/reports/cashflow": {
+            "post": {
+                "tags": [
+                    "Finance Reports"
+                ],
+                "summary": "Get cashflow report",
+                "description": "Generate cashflow report for a given date range",
+                "operationId": "884d88f4e7a50612b7634b530ec08936",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "start_date",
+                                    "end_date"
+                                ],
+                                "properties": {
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-01"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-31"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Report generated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/finance/reports/omset-by-dapur": {
+            "post": {
+                "tags": [
+                    "Finance Reports"
+                ],
+                "summary": "Get omset (revenue) by dapur",
+                "description": "Generate revenue report grouped by dapur for a given date range",
+                "operationId": "5261ffa989857000665fe1cb3ed1b3bd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "start_date",
+                                    "end_date"
+                                ],
+                                "properties": {
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-01"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-31"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Report generated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/finance/reports/omset-by-item": {
+            "post": {
+                "tags": [
+                    "Finance Reports"
+                ],
+                "summary": "Get omset (revenue) by item",
+                "description": "Generate revenue report grouped by stock item for a given date range",
+                "operationId": "ffd39a7cf6b46ba4e9ae18970e355ab0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "start_date",
+                                    "end_date"
+                                ],
+                                "properties": {
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-01"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-31"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Report generated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/finance/{id}/mark-paid": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Mark transaction as paid",
+                "description": "Mark a pending transaction as paid",
+                "operationId": "0ab447b7534aebe9e7220f7fe98d916a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Transaction UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "payment_date"
+                                ],
+                                "properties": {
+                                    "payment_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-15"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Transaction marked as paid"
+                    },
+                    "404": {
+                        "description": "Transaction not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/kitchen/list": {
+            "post": {
+                "tags": [
+                    "Kitchen Orders"
+                ],
+                "summary": "Get all kitchen orders",
+                "description": "Returns a paginated list of kitchen orders",
+                "operationId": "bbd1343dc597b571de4caabaabfbb7a2",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "pageNumber": {
+                                        "description": "Page number",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "pageSize": {
+                                        "description": "Items per page",
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "sortDir": {
+                                        "description": "Sort direction",
+                                        "type": "string",
+                                        "enum": [
+                                            "ASC",
+                                            "DESC"
+                                        ],
+                                        "example": "ASC"
+                                    },
+                                    "sortDirColumn": {
+                                        "description": "Column to sort by",
+                                        "type": "string",
+                                        "example": "id"
+                                    },
+                                    "search": {
+                                        "description": "Global search string",
+                                        "type": "string",
+                                        "example": "ORDER"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/kitchen/detail/{id}": {
+            "post": {
+                "tags": [
+                    "Kitchen Orders"
+                ],
+                "summary": "Get kitchen order detail",
+                "description": "Get detailed information about a specific kitchen order",
+                "operationId": "9cc0ee796d7ddb37767e4fe134631710",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Kitchen Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/kitchen/create": {
+            "post": {
+                "tags": [
+                    "Kitchen Orders"
+                ],
+                "summary": "Create kitchen order",
+                "description": "Create a new draft kitchen order",
+                "operationId": "b965e6daa70d1673824dac63631e2ee0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "dapur_id",
+                                    "items"
+                                ],
+                                "properties": {
+                                    "dapur_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "item_id",
+                                                "quantity"
+                                            ],
+                                            "properties": {
+                                                "item_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Order created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/kitchen/{id}/send": {
+            "post": {
+                "tags": [
+                    "Kitchen Orders"
+                ],
+                "summary": "Send kitchen order",
+                "description": "Send a draft kitchen order for processing",
+                "operationId": "47e5676ad7e6d29331271efceafac245",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Kitchen Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order sent successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/kitchen/{id}/process": {
+            "post": {
+                "tags": [
+                    "Kitchen Orders"
+                ],
+                "summary": "Process kitchen order",
+                "description": "Process order with FEFO stock allocation",
+                "operationId": "1bdf83f56206e0d500e437f7260864b8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Kitchen Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "items"
+                                ],
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "item_id",
+                                                "quantity"
+                                            ],
+                                            "properties": {
+                                                "item_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order processed successfully with FEFO allocation"
+                    },
+                    "400": {
+                        "description": "Insufficient stock"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/kitchen/{id}/deliver": {
+            "post": {
+                "tags": [
+                    "Kitchen Orders"
+                ],
+                "summary": "Deliver kitchen order",
+                "description": "Deliver order with QR code generation, stock reduction, and transaction recording",
+                "operationId": "9126530d3ccd95f3667f6b89a7018829",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Kitchen Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "delivered_by": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order delivered successfully with QR code"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/purchase-orders/{po}/cancel": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Cancel purchase order",
+                "description": "Cancel a purchase order",
+                "operationId": "e0ddd0592675055d7e077ec36185e0d7",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "No longer needed"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "PO cancelled successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/purchase-orders/list": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Get all purchase orders",
+                "description": "Returns a paginated list of purchase orders",
+                "operationId": "6a9f0115030c731a20950b2869042a7c",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "pageNumber": {
+                                        "description": "Page number",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "pageSize": {
+                                        "description": "Items per page",
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "sortDir": {
+                                        "description": "Sort direction",
+                                        "type": "string",
+                                        "enum": [
+                                            "ASC",
+                                            "DESC"
+                                        ],
+                                        "example": "ASC"
+                                    },
+                                    "sortDirColumn": {
+                                        "description": "Column to sort by",
+                                        "type": "string",
+                                        "example": "id"
+                                    },
+                                    "search": {
+                                        "description": "Global search string",
+                                        "type": "string",
+                                        "example": "PO"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/purchase-orders/{po}": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Get purchase order detail",
+                "description": "Get detailed information about a specific purchase order",
+                "operationId": "d20f6217017f306a7cc19f9da85a6627",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/purchase-orders/create": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Create purchase order",
+                "description": "Create a new draft purchase order",
+                "operationId": "cc7c7709a3f4f49e7eb96d495cc4f5ab",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "supplier_id",
+                                    "items"
+                                ],
+                                "properties": {
+                                    "supplier_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "po_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-15"
+                                    },
+                                    "estimated_delivery_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-20"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "item_id",
+                                                "estimated_qty",
+                                                "estimated_unit_price"
+                                            ],
+                                            "properties": {
+                                                "item_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "estimated_qty": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "estimated_unit_price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 15000
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "PO created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/purchase-orders/{po}/koperasi/confirm": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Koperasi confirms supplier response",
+                "description": "Koperasi confirms supplier's price/quantity confirmation",
+                "operationId": "1ee5c4fe0555fc1fa08c09bcc1fe1e17",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supplier response confirmed successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/purchase-orders/{po}/koperasi/reject": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Koperasi rejects supplier response",
+                "description": "Koperasi rejects supplier's price/quantity confirmation",
+                "operationId": "a7865d9fbca45269c197b754e753a956",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Supplier response rejected successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/purchase-orders/{po}/koperasi/receive": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Receive goods from PO",
+                "description": "Receive goods from supplier, create stock batches, and record purchase transaction",
+                "operationId": "ecd558efd6f45b8c37fbbabc57b9594c",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "items"
+                                ],
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "item_id",
+                                                "received_qty",
+                                                "actual_unit_price",
+                                                "expiry_date"
+                                            ],
+                                            "properties": {
+                                                "item_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "received_qty": {
+                                                    "type": "integer"
+                                                },
+                                                "actual_unit_price": {
+                                                    "type": "number",
+                                                    "format": "float"
+                                                },
+                                                "expiry_date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-12-31"
+                                                },
+                                                "batch_number": {
+                                                    "description": "Auto-generated if not provided",
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Goods received successfully, batches created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/purchase-orders/{po}/supplier/confirm": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Supplier confirms PO",
+                "description": "Supplier confirms purchase order with final prices and quantities",
+                "operationId": "5dd8b0fddb482218c0371c83737d3ec1",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "items"
+                                ],
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "item_id",
+                                                "confirmed_qty",
+                                                "confirmed_unit_price"
+                                            ],
+                                            "properties": {
+                                                "item_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "confirmed_qty": {
+                                                    "type": "integer"
+                                                },
+                                                "confirmed_unit_price": {
+                                                    "type": "number",
+                                                    "format": "float"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "PO confirmed successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/purchase-orders/{po}/supplier/reject": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Supplier rejects PO",
+                "description": "Supplier rejects purchase order with reason",
+                "operationId": "72cc7e95ce7aa0ff60554474591b5b06",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Items not available"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "PO rejected successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/purchase-orders/{po}/update": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Update purchase order",
+                "description": "Update a draft purchase order",
+                "operationId": "58d15db2d572a485586a1acd4e0017d6",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "supplier_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "po_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "estimated_delivery_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "item_id",
+                                                "estimated_qty",
+                                                "estimated_unit_price"
+                                            ],
+                                            "properties": {
+                                                "item_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "estimated_qty": {
+                                                    "type": "integer"
+                                                },
+                                                "estimated_unit_price": {
+                                                    "type": "number",
+                                                    "format": "float"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "PO updated successfully"
+                    },
+                    "400": {
+                        "description": "Can only update draft POs"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/qrcode/generate": {
+            "post": {
+                "tags": [
+                    "QR Code"
+                ],
+                "summary": "Generate QR code",
+                "description": "Generate a QR code for order delivery or purchase receipt",
+                "operationId": "ee81ec63dee99a8dfdf4e82c2591d74e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "reference_id"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "KITCHEN_DELIVERY",
+                                            "PURCHASE_RECEIPT"
+                                        ],
+                                        "example": "KITCHEN_DELIVERY"
+                                    },
+                                    "reference_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "123e4567-e89b-12d3-a456-426614174000"
+                                    },
+                                    "data": {
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "QR code generated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "qr_string": {
+                                                    "type": "string",
+                                                    "example": "ORD-1234567890-QR-abc123"
+                                                },
+                                                "image_url": {
+                                                    "type": "string",
+                                                    "example": "https://storage.example.com/qr-codes/ORD-1234567890-QR-abc123.png"
+                                                },
+                                                "qr_code": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "QR code generated successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/qrcode/verify": {
+            "post": {
+                "tags": [
+                    "QR Code"
+                ],
+                "summary": "Verify QR code",
+                "description": "Verify a QR code by its string and mark it as scanned",
+                "operationId": "82cfa66634f1d7fef337a63a457bf05a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "qr_string"
+                                ],
+                                "properties": {
+                                    "qr_string": {
+                                        "description": "QR code string to verify",
+                                        "type": "string",
+                                        "example": "ORD-1234567890-QR-abc123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "QR code verification result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "valid": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "KITCHEN_DELIVERY"
+                                                },
+                                                "reference_id": {
+                                                    "type": "string",
+                                                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                                                },
+                                                "data": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "QR code not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/qrcode/detail/{id}": {
+            "post": {
+                "tags": [
+                    "QR Code"
+                ],
+                "summary": "Get QR code detail",
+                "description": "Get detailed information about a specific QR code",
+                "operationId": "2819fa8ee6abaa82a3020e9ab123063d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "QR Code UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "QR code not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/stock/adjust": {
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Record stock adjustment",
+                "description": "Record stock movements (IN, OUT, ADJUSTMENT, OPNAME) with FEFO allocation for OUT movements",
+                "operationId": "df640965169aaee8600d0ad1c3ac80c8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "item_id",
+                                    "type",
+                                    "quantity"
+                                ],
+                                "properties": {
+                                    "item_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "123e4567-e89b-12d3-a456-426614174000"
+                                    },
+                                    "batch_id": {
+                                        "description": "Required for IN type",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "123e4567-e89b-12d3-a456-426614174001"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "IN",
+                                            "OUT",
+                                            "ADJUSTMENT",
+                                            "OPNAME"
+                                        ],
+                                        "example": "OUT"
+                                    },
+                                    "quantity": {
+                                        "description": "Quantity to adjust",
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "reference": {
+                                        "description": "Reference code",
+                                        "type": "string",
+                                        "example": "ADJ"
+                                    },
+                                    "reference_id": {
+                                        "type": "string",
+                                        "example": "REF-001"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Stock adjustment notes"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Stock adjustment recorded successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Profile updated successfully"
+                                            "example": "Stock adjustment recorded successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Insufficient stock or invalid request"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/stock/alerts/list": {
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Get stock alerts",
+                "description": "Returns a list of unresolved stock alerts (low stock, expired, etc.)",
+                "operationId": "1d3a32adcaa9de3ad98147d92794a903",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "pageNumber": {
+                                        "description": "Page number",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "pageSize": {
+                                        "description": "Items per page",
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "sortDir": {
+                                        "description": "Sort direction",
+                                        "type": "string",
+                                        "enum": [
+                                            "ASC",
+                                            "DESC"
+                                        ],
+                                        "example": "ASC"
+                                    },
+                                    "sortDirColumn": {
+                                        "description": "Column to sort by",
+                                        "type": "string",
+                                        "example": "id"
+                                    },
+                                    "search": {
+                                        "description": "Global search string",
+                                        "type": "string",
+                                        "example": "LOW"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
                                         },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/stock/alerts/resolve/{id}": {
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Resolve stock alert",
+                "description": "Mark a stock alert as resolved",
+                "operationId": "1ccba03152cf996924e3aab00ee0ac52",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Alert UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Alert resolved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Alert resolved successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Alert not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/stock/batches/list/{itemId}": {
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Get batches by item",
+                "description": "Returns a list of stock batches for a specific item, sorted by expiry date (FEFO)",
+                "operationId": "63124e4329f6d3e94541231fae9cdfd8",
+                "parameters": [
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "description": "Stock Item UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "pageNumber": {
+                                        "description": "Page number",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "pageSize": {
+                                        "description": "Items per page",
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "sortDir": {
+                                        "description": "Sort direction",
+                                        "type": "string",
+                                        "enum": [
+                                            "ASC",
+                                            "DESC"
+                                        ],
+                                        "example": "ASC"
+                                    },
+                                    "sortDirColumn": {
+                                        "description": "Column to sort by",
+                                        "type": "string",
+                                        "example": "id"
+                                    },
+                                    "search": {
+                                        "description": "Global search string",
+                                        "type": "string",
+                                        "example": "BATCH"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/stock/batches/detail/{id}": {
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Get batch detail",
+                "description": "Get detailed information about a specific stock batch",
+                "operationId": "d1ba8373c6974ed148a99b0ca451f178",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Stock Batch UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Batch not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/stock/items/list": {
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Get all stock items",
+                "description": "Returns a paginated list of all stock items.",
+                "operationId": "df9efba35387df7ffec366c4059efb7a",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "pageNumber": {
+                                        "description": "Page number",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "pageSize": {
+                                        "description": "Items per page",
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "sortDir": {
+                                        "description": "Sort direction",
+                                        "type": "string",
+                                        "enum": [
+                                            "ASC",
+                                            "DESC"
+                                        ],
+                                        "example": "ASC"
+                                    },
+                                    "sortDirColumn": {
+                                        "description": "Column to sort by",
+                                        "type": "string",
+                                        "example": "id"
+                                    },
+                                    "search": {
+                                        "description": "Global search string",
+                                        "type": "string",
+                                        "example": "Beras"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/stock/items/create": {
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Create a new stock item",
+                "description": "Create a new stock item with pricing and stock information",
+                "operationId": "321b44515d22106b610eb893b2a62430",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code",
+                                    "name",
+                                    "category",
+                                    "unit",
+                                    "min_stock",
+                                    "buy_price",
+                                    "sell_price"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "STK-001"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Beras Premium 25kg"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "Beras"
+                                    },
+                                    "unit": {
+                                        "type": "string",
+                                        "example": "karung"
+                                    },
+                                    "min_stock": {
+                                        "description": "Minimum stock level for alerts",
+                                        "type": "integer",
+                                        "example": 50
+                                    },
+                                    "buy_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 150000
+                                    },
+                                    "sell_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 165000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Stock item created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Stock item created successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/stock/items/detail/{id}": {
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Get stock item detail",
+                "description": "Get detailed information about a specific stock item",
+                "operationId": "5b66e570a14caf99c726c1abd6ed78e4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Stock Item UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Stock item not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/stock/items/update/{id}": {
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Update stock item",
+                "description": "Update an existing stock item's information",
+                "operationId": "15ea8d1dba8964401e2367dbf11dced4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Stock Item UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "STK-001"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Beras Premium 25kg"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "Beras"
+                                    },
+                                    "unit": {
+                                        "type": "string",
+                                        "example": "karung"
+                                    },
+                                    "min_stock": {
+                                        "type": "integer",
+                                        "example": 50
+                                    },
+                                    "buy_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 150000
+                                    },
+                                    "sell_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 165000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Stock item updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Stock item updated successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Stock item not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/stock/items/delete/{id}": {
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Delete stock item",
+                "description": "Delete a stock item",
+                "operationId": "14a69e272be03584d95c93a105f2d6be",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Stock Item UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stock item deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Stock item deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Stock item not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/suppliers/list": {
+            "post": {
+                "tags": [
+                    "Suppliers"
+                ],
+                "summary": "Get all suppliers",
+                "description": "Returns a paginated list of all suppliers.",
+                "operationId": "fd05c13e139000a2ced24c8ca0d89d77",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "pageNumber": {
+                                        "description": "Page number",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "pageSize": {
+                                        "description": "Items per page",
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "sortDir": {
+                                        "description": "Sort direction",
+                                        "type": "string",
+                                        "enum": [
+                                            "ASC",
+                                            "DESC"
+                                        ],
+                                        "example": "ASC"
+                                    },
+                                    "sortDirColumn": {
+                                        "description": "Column to sort by",
+                                        "type": "string",
+                                        "example": "id"
+                                    },
+                                    "search": {
+                                        "description": "Global search string",
+                                        "type": "string",
+                                        "example": "Beras"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/suppliers/create": {
+            "post": {
+                "tags": [
+                    "Suppliers"
+                ],
+                "summary": "Create a new supplier",
+                "description": "Create a new supplier with the provided data",
+                "operationId": "f1e930fea46ecba6f183e660fe10d79d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "contact_person",
+                                    "phone",
+                                    "email",
+                                    "address"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "PT Beras Jaya Makmur"
+                                    },
+                                    "contact_person": {
+                                        "type": "string",
+                                        "example": "Budi Santoso"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "081234567890"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "budisantoso@berasjaya.co.id"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Jl. Raya Bogor KM 25, Jakarta Selatan"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Supplier created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Supplier created successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/suppliers/detail/{id}": {
+            "post": {
+                "tags": [
+                    "Suppliers"
+                ],
+                "summary": "Get supplier detail",
+                "description": "Get detailed information about a specific supplier",
+                "operationId": "b3d4e5184a34e57e43d84c40a6e2a682",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "description": "Supplier UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Supplier not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/suppliers/update/{id}": {
+            "post": {
+                "tags": [
+                    "Suppliers"
+                ],
+                "summary": "Update supplier",
+                "description": "Update an existing supplier's information",
+                "operationId": "b4df96e5371e0f415bca2cb1efb4bdb1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Supplier UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "PT Beras Jaya Makmur Updated"
+                                    },
+                                    "contact_person": {
+                                        "type": "string",
+                                        "example": "Budi Santoso"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "081234567890"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "budisantoso@berasjaya.co.id"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Jl. Raya Bogor KM 25, Jakarta Selatan"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "inactive",
+                                            "suspended"
+                                        ],
+                                        "example": "active"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Supplier updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Supplier updated successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Supplier not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/suppliers/delete/{id}": {
+            "post": {
+                "tags": [
+                    "Suppliers"
+                ],
+                "summary": "Delete supplier",
+                "description": "Soft delete a supplier",
+                "operationId": "e7e294f71a451ca5901f7937c7f16669",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Supplier UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supplier deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Supplier deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Supplier not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/suppliers/my-profile": {
+            "get": {
+                "tags": [
+                    "Suppliers"
+                ],
+                "summary": "Get my supplier profile",
+                "description": "Get the logged-in supplier user profile",
+                "operationId": "b204385b8349598402a96afdbf1ca57e",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "User not associated with any supplier"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Suppliers"
+                ],
+                "summary": "Update my supplier profile",
+                "description": "Update the logged-in supplier user profile (for PEMASOK/ADMIN_PEMASOK roles)",
+                "operationId": "8accda71613ed7c2c96ffece53c66034",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "PT Beras Jaya Makmur"
+                                    },
+                                    "contact_person": {
+                                        "type": "string",
+                                        "example": "Budi Santoso"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "081234567890"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Jl. Raya Bogor KM 25, Jakarta Selatan"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profile updated successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "User not associated with any supplier"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/Admin/Users/View/{id}": {
+            "post": {
+                "tags": [
+                    "Admins"
+                ],
+                "summary": "View user by ID",
+                "description": "Get user details by ID",
+                "operationId": "829869cd4909171c1457130db654cda6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
                                         "status": {
                                             "type": "string",
                                             "example": "success"
                                         },
                                         "statusCode": {
                                             "type": "integer",
-                                            "example": 204
+                                            "example": 200
                                         },
                                         "data": {
                                             "$ref": "#/components/schemas/UserResource"
@@ -800,11 +3692,8 @@
                     "401": {
                         "$ref": "#/components/responses/401"
                     },
-                    "422": {
-                        "$ref": "#/components/responses/422"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/500"
+                    "404": {
+                        "$ref": "#/components/responses/404"
                     }
                 },
                 "security": [
@@ -814,56 +3703,40 @@
                 ]
             }
         },
-        "/user/change-password": {
-            "put": {
+        "/Admin/Users/Delete/{id}": {
+            "post": {
                 "tags": [
-                    "User"
+                    "Admins"
                 ],
-                "summary": "Change User Password",
-                "description": "Change the user's password.",
-                "operationId": "changePassword",
-                "requestBody": {
-                    "description": "Password change request data",
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "current_password": {
-                                        "description": "Current password",
-                                        "type": "string",
-                                        "example": "old_password"
-                                    },
-                                    "new_password": {
-                                        "description": "New password",
-                                        "type": "string",
-                                        "example": "new_password"
-                                    },
-                                    "new_password_confirmation": {
-                                        "description": "Confirm new password",
-                                        "type": "string",
-                                        "example": "new_password"
-                                    }
-                                },
-                                "type": "object"
-                            }
+                "summary": "Delete a user",
+                "description": "Permanently delete a user by ID from database",
+                "operationId": "366f7ae2615003578edcb6500d09df84",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
-                },
+                ],
                 "responses": {
                     "200": {
-                        "description": "Password changed successfully",
+                        "description": "User deleted successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Password changed successfully"
-                                        },
                                         "status": {
                                             "type": "string",
                                             "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User deleted successfully"
                                         },
                                         "statusCode": {
                                             "type": "integer",
@@ -878,11 +3751,11 @@
                     "401": {
                         "$ref": "#/components/responses/401"
                     },
-                    "422": {
-                        "$ref": "#/components/responses/422"
+                    "403": {
+                        "$ref": "#/components/responses/403"
                     },
-                    "500": {
-                        "$ref": "#/components/responses/500"
+                    "404": {
+                        "$ref": "#/components/responses/404"
                     }
                 },
                 "security": [
@@ -895,28 +3768,858 @@
     },
     "components": {
         "schemas": {
-            "RegisterRequest": {
-                "title": "User Registration Request",
-                "description": "Schema for the user registration request",
+            "AdminCreateRequest": {
+                "title": "User Create Request",
+                "description": "Request schema for creating a new user (admin or regular user)",
                 "required": [
-                    "name",
+                    "namaLengkap",
+                    "username",
                     "email",
-                    "password"
+                    "password",
+                    "role"
                 ],
                 "properties": {
-                    "name": {
+                    "namaLengkap": {
+                        "description": "Full name",
                         "type": "string",
                         "maxLength": 255,
-                        "example": "John"
+                        "example": "John Doe"
+                    },
+                    "username": {
+                        "description": "Username",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "johndoe"
                     },
                     "email": {
+                        "description": "Email address",
                         "type": "string",
                         "format": "email",
                         "example": "john@example.com"
                     },
                     "password": {
+                        "description": "Password",
                         "type": "string",
+                        "minLength": 8,
                         "example": "password123"
+                    },
+                    "role": {
+                        "description": "Role to assign to the user",
+                        "type": "string",
+                        "enum": [
+                            "SUPER_ADMIN",
+                            "ADMIN_PEMASOK",
+                            "KEUANGAN",
+                            "PEMASOK",
+                            "KOPERASI",
+                            "DAPUR"
+                        ],
+                        "example": "PEMASOK"
+                    },
+                    "supplier_id": {
+                        "description": "Supplier ID (optional - use existing supplier)",
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "uuid"
+                    },
+                    "dapur_id": {
+                        "description": "Dapur ID (optional - use existing dapur)",
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "uuid"
+                    },
+                    "supplier_data": {
+                        "description": "Supplier data (REQUIRED for PEMASOK/ADMIN_PEMASOK roles if supplier_id not provided. Can send either full supplier_code OR separate components)",
+                        "properties": {
+                            "name": {
+                                "description": "Company name (REQUIRED)",
+                                "type": "string",
+                                "example": "PT Sumber Pangan Sejahtera"
+                            },
+                            "contact_person": {
+                                "description": "Contact person",
+                                "type": "string",
+                                "example": "Budi Santoso"
+                            },
+                            "phone": {
+                                "description": "Phone number",
+                                "type": "string",
+                                "example": "081234567890"
+                            },
+                            "email": {
+                                "description": "Supplier email",
+                                "type": "string",
+                                "format": "email",
+                                "example": "supplier@example.com"
+                            },
+                            "address": {
+                                "description": "Supplier address",
+                                "type": "string",
+                                "example": "Jl. Raya Bogor KM 25"
+                            },
+                            "district": {
+                                "description": "District/Kota (REQUIRED, will be saved to database: Karawang, Jakarta Selatan, etc)",
+                                "type": "string",
+                                "example": "Karawang"
+                            },
+                            "supplier_type": {
+                                "description": "Supplier type (REQUIRED): RAW=bahan baku, PKG=packaging, EQP=equipment, CON=consumable",
+                                "type": "string",
+                                "enum": [
+                                    "PKG",
+                                    "RAW",
+                                    "EQP",
+                                    "CON"
+                                ],
+                                "example": "RAW"
+                            },
+                            "supplier_code": {
+                                "description": "Full supplier code (OPTIONAL if using separate fields. Format: SUP-{TIPE}-{PERUSAHAAN}-{LOKASI}-{TAHUN}-{URUT})",
+                                "type": "string",
+                                "example": "SUP-RAW-SPS-KWG-26-0001"
+                            },
+                            "supplier_category": {
+                                "description": "Supplier category (for separate field input)",
+                                "type": "string",
+                                "enum": [
+                                    "RAW",
+                                    "PKG",
+                                    "EQP",
+                                    "CON"
+                                ],
+                                "example": "RAW"
+                            },
+                            "supplier_company_code": {
+                                "description": "Company code (3 uppercase letters, for separate field input)",
+                                "type": "string",
+                                "example": "SPS"
+                            },
+                            "supplier_location": {
+                                "description": "Location code (3 uppercase letters, for separate field input)",
+                                "type": "string",
+                                "example": "KWG"
+                            },
+                            "supplier_year": {
+                                "description": "Year (2 digits, for separate field input)",
+                                "type": "string",
+                                "example": "26"
+                            },
+                            "supplier_sequence": {
+                                "description": "Sequence number (4 digits, for separate field input)",
+                                "type": "string",
+                                "example": "0001"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "dapur_data": {
+                        "description": "Dapur data (optional - if not provided and dapur_id not provided, will auto-create with minimal data)",
+                        "properties": {
+                            "name": {
+                                "description": "Dapur name",
+                                "type": "string",
+                                "example": "Dapur Pusat A"
+                            },
+                            "location": {
+                                "description": "Dapur location",
+                                "type": "string",
+                                "example": "Gedung Utama Lt. 1"
+                            },
+                            "pic_name": {
+                                "description": "PIC name",
+                                "type": "string",
+                                "example": "Siti Aminah"
+                            },
+                            "pic_phone": {
+                                "description": "PIC phone",
+                                "type": "string",
+                                "example": "081112223334"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AdminUpdateRequest": {
+                "title": "User Update Request",
+                "description": "Request schema for updating a user (admin or regular user)",
+                "required": [
+                    "namaLengkap",
+                    "username",
+                    "email",
+                    "role"
+                ],
+                "properties": {
+                    "namaLengkap": {
+                        "description": "Full name",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "John Doe"
+                    },
+                    "username": {
+                        "description": "Username",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "johndoe"
+                    },
+                    "email": {
+                        "description": "Email address",
+                        "type": "string",
+                        "format": "email",
+                        "example": "john@example.com"
+                    },
+                    "password": {
+                        "description": "Password (optional for update)",
+                        "type": "string",
+                        "minLength": 8,
+                        "example": "password123"
+                    },
+                    "role": {
+                        "description": "Role to assign to the user",
+                        "type": "string",
+                        "enum": [
+                            "SUPER_ADMIN",
+                            "ADMIN_PEMASOK",
+                            "KEUANGAN",
+                            "PEMASOK",
+                            "KOPERASI",
+                            "DAPUR"
+                        ],
+                        "example": "PEMASOK"
+                    },
+                    "supplier_id": {
+                        "description": "Supplier ID (optional - if not provided, will create new supplier)",
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "uuid"
+                    },
+                    "dapur_id": {
+                        "description": "Dapur ID (optional - if not provided, will create new dapur)",
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "uuid"
+                    },
+                    "supplier_data": {
+                        "description": "Supplier data (required for PEMASOK/ADMIN_PEMASOK role if supplier_id not provided)",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "example": "PT Beras Jaya Makmur"
+                            },
+                            "contact_person": {
+                                "type": "string",
+                                "example": "Budi Santoso"
+                            },
+                            "phone": {
+                                "type": "string",
+                                "example": "081234567890"
+                            },
+                            "email": {
+                                "type": "string",
+                                "format": "email",
+                                "example": "supplier@example.com"
+                            },
+                            "address": {
+                                "type": "string",
+                                "example": "Jl. Raya Bogor KM 25"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "dapur_data": {
+                        "description": "Dapur data (required for DAPUR role if dapur_id not provided)",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "example": "Dapur Pusat A"
+                            },
+                            "location": {
+                                "type": "string",
+                                "example": "Gedung Utama Lt. 1"
+                            },
+                            "pic_name": {
+                                "type": "string",
+                                "example": "Siti Aminah"
+                            },
+                            "pic_phone": {
+                                "type": "string",
+                                "example": "081112223334"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AdminResource": {
+                "title": "Admin Resource",
+                "description": "Schema for the admin resource",
+                "properties": {
+                    "no": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "firstName": {
+                        "type": "string",
+                        "example": "John"
+                    },
+                    "lastName": {
+                        "type": "string",
+                        "example": "Doe"
+                    },
+                    "fullName": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "username": {
+                        "type": "string",
+                        "example": "johndoe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "admin@example.com"
+                    },
+                    "role": {
+                        "type": "string",
+                        "example": "Super Admin"
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "supplierId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "supplierCode": {
+                        "type": "string",
+                        "example": "SUP-001",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "active"
+                    },
+                    "isSuperAdmin": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "example": "2025-01-15 10:30:00"
+                    }
+                },
+                "type": "object"
+            },
+            "PermissionResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RoleResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PermissionResource"
+                        }
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "AdminActivityLogResource": {
+                "required": [
+                    "id",
+                    "admin",
+                    "action",
+                    "model_type",
+                    "model_id",
+                    "meta",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "The unique identifier for the activity log.",
+                        "type": "integer"
+                    },
+                    "admin": {
+                        "$ref": "#/components/schemas/AdminResource"
+                    },
+                    "action": {
+                        "description": "The action performed by the admin (e.g., 'approved_contract').",
+                        "type": "string"
+                    },
+                    "model_type": {
+                        "description": "The type of the model being acted upon (e.g., 'contract').",
+                        "type": "string"
+                    },
+                    "model_id": {
+                        "description": "The ID of the model being acted upon (e.g., the contract ID).",
+                        "type": "integer"
+                    },
+                    "meta": {
+                        "description": "Additional metadata related to the action (e.g., contract name, user ID).",
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "description": "The timestamp when the activity log was created.",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "CreateStockItemRequest": {
+                "title": "Create Stock Item Request",
+                "description": "Schema for creating a new stock item",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Beras Premium"
+                    },
+                    "category": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Sembako"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "kg"
+                    },
+                    "min_stock": {
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "buy_price": {
+                        "type": "number",
+                        "format": "decimal",
+                        "example": 12000
+                    },
+                    "sell_price": {
+                        "type": "number",
+                        "format": "decimal",
+                        "example": 15000
+                    }
+                },
+                "type": "object"
+            },
+            "StockAdjustmentRequest": {
+                "title": "Stock Adjustment Request",
+                "description": "Schema for stock adjustment",
+                "required": [
+                    "item_id",
+                    "type",
+                    "quantity"
+                ],
+                "properties": {
+                    "item_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "batch_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440001"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "in",
+                            "out",
+                            "adjustment",
+                            "opname"
+                        ],
+                        "example": "adjustment"
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "reference": {
+                        "type": "string",
+                        "example": "ADJ-001"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Stock opname adjustment"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateStockItemRequest": {
+                "title": "Update Stock Item Request",
+                "description": "Schema for updating an existing stock item",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Beras Premium 5kg"
+                    },
+                    "category": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Sembako"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "karung"
+                    },
+                    "min_stock": {
+                        "type": "integer",
+                        "example": 50
+                    },
+                    "buy_price": {
+                        "type": "number",
+                        "format": "decimal",
+                        "example": 13000
+                    },
+                    "sell_price": {
+                        "type": "number",
+                        "format": "decimal",
+                        "example": 16000
+                    }
+                },
+                "type": "object"
+            },
+            "StockAlertResource": {
+                "title": "Stock Alert Resource",
+                "description": "Schema for the stock alert resource",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "itemId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "batchId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "alertType": {
+                        "type": "string",
+                        "example": "low_stock"
+                    },
+                    "severity": {
+                        "type": "string",
+                        "example": "warning"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Item Beras Premium is below minimum stock level"
+                    },
+                    "currentQty": {
+                        "type": "integer",
+                        "example": 50
+                    },
+                    "threshold": {
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "expiryDate": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "daysToExpiry": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "isResolved": {
+                        "type": "boolean"
+                    },
+                    "resolvedAt": {
+                        "type": "string",
+                        "format": "datetime",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "StockBatchResource": {
+                "title": "Stock Batch Resource",
+                "description": "Schema for the stock batch resource",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "itemId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "batchNumber": {
+                        "type": "string",
+                        "example": "BATCH-20250226-STK001-001"
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "remainingQty": {
+                        "type": "integer",
+                        "example": 75
+                    },
+                    "buyPrice": {
+                        "type": "number",
+                        "format": "decimal",
+                        "example": 12000
+                    },
+                    "expiryDate": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-12-31"
+                    },
+                    "location": {
+                        "type": "string",
+                        "example": "Gudang A-Rak 1"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "available"
+                    },
+                    "receivedDate": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-02-26"
+                    },
+                    "isExpired": {
+                        "type": "boolean"
+                    },
+                    "isExpiringSoon": {
+                        "type": "boolean"
+                    },
+                    "isAvailable": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "StockItemResource": {
+                "title": "Stock Item Resource",
+                "description": "Schema for the stock item resource",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "STK-001"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Beras Premium"
+                    },
+                    "category": {
+                        "type": "string",
+                        "example": "Sembako"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "example": "kg"
+                    },
+                    "minStock": {
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "buyPrice": {
+                        "type": "number",
+                        "format": "decimal",
+                        "example": 12000
+                    },
+                    "sellPrice": {
+                        "type": "number",
+                        "format": "decimal",
+                        "example": 15000
+                    },
+                    "currentStock": {
+                        "type": "integer",
+                        "example": 500
+                    },
+                    "isLowStock": {
+                        "type": "boolean"
+                    },
+                    "isOutOfStock": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "CreateSupplierRequest": {
+                "title": "Create Supplier Request",
+                "description": "Schema for creating a new supplier",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "PT Sembako Makmur"
+                    },
+                    "contact_person": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Budi Santoso"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "example": "081234567890"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "contact@sembakomakmur.com"
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "Jl. Raya No. 123, Jakarta"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "suspended"
+                        ],
+                        "example": "active"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateSupplierRequest": {
+                "title": "Update Supplier Request",
+                "description": "Schema for updating an existing supplier",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "PT Sembako Makmur Updated"
+                    },
+                    "contact_person": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Ahmad Wijaya"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "example": "081234567891"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "sales@sembakomakmur.com"
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "Jl. Raya No. 456, Jakarta"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "suspended"
+                        ],
+                        "example": "active"
+                    }
+                },
+                "type": "object"
+            },
+            "SupplierResource": {
+                "title": "Supplier Resource",
+                "description": "Schema for the supplier resource",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "SUP-001"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "PT Sembako Makmur"
+                    },
+                    "contact_person": {
+                        "type": "string",
+                        "example": "Budi Santoso"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "081234567890"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "contact@sembakomakmur.com"
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "Jl. Raya No. 123, Jakarta"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "active"
                     }
                 },
                 "type": "object"
@@ -958,12 +4661,27 @@
                         "type": "string",
                         "example": "john@example.com"
                     },
-                    "roles": {
-                        "type": "array",
-                        "items": {
-                            "type": "string",
-                            "example": "user"
-                        }
+                    "supplierId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "supplierCode": {
+                        "type": "string",
+                        "example": "SUP-001",
+                        "nullable": true
+                    },
+                    "dapurId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "dapurCode": {
+                        "type": "string",
+                        "example": "DAP-001",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -1111,12 +4829,40 @@
     },
     "tags": [
         {
+            "name": "Admins",
+            "description": "Admins"
+        },
+        {
             "name": "Authentication",
             "description": "Authentication"
         },
         {
-            "name": "User",
-            "description": "User"
+            "name": "Finance",
+            "description": "Finance"
+        },
+        {
+            "name": "Finance Reports",
+            "description": "Finance Reports"
+        },
+        {
+            "name": "Kitchen Orders",
+            "description": "Kitchen Orders"
+        },
+        {
+            "name": "Purchase Orders",
+            "description": "Purchase Orders"
+        },
+        {
+            "name": "QR Code",
+            "description": "QR Code"
+        },
+        {
+            "name": "Stock",
+            "description": "Stock"
+        },
+        {
+            "name": "Suppliers",
+            "description": "Suppliers"
         }
     ]
 }

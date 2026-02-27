@@ -13,46 +13,125 @@ use Shared\Helpers\ResponseHelper;
 
 final class UserController extends Controller
 {
-    public function show(User $user): \Illuminate\Http\JsonResponse
+    public function index(Request $request): \Illuminate\Http\JsonResponse
     {
+        // Get parameters with defaults
+        $search = $request->input('search', '');
+        $sortColumn = $request->input('sortColumn', 'created_at');
+        $sortColumnDir = $request->input('sortColumnDir', 'desc');
+        $pageNumber = $request->input('pageNumber', 1);
+        $pageSize = $request->input('pageSize', 15);
+
+        // Build query with roles
+        try {
+            $query = User::with(['roles' => function ($q) {
+                $q->select('roles.id', 'roles.name', 'roles.slug');
+            }]);
+        } catch (\Exception $e) {
+            // Roles relation doesn't exist
+            $query = User::query();
+        }
+
+        // Apply global search
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'ILIKE', "%{$search}%")
+                  ->orWhere('last_name', 'ILIKE', "%{$search}%")
+                  ->orWhere('email', 'ILIKE', "%{$search}%")
+                  ->orWhere('username', 'ILIKE', "%{$search}%");
+            });
+        }
+
+        // Apply sorting
+        $query->orderBy($sortColumn, $sortColumnDir);
+
+        // Get total count for pagination metadata
+        $total = $query->count();
+
+        // Apply pagination with offset/limit
+        $offset = ($pageNumber - 1) * $pageSize;
+        $users = $query->offset($offset)->limit($pageSize)->get();
+
+        // Add row numbers
+        $users->each(function ($user, $index) use ($pageNumber, $pageSize) {
+            $user->row_number = ($pageNumber - 1) * $pageSize + $index + 1;
+        });
+
+        return ResponseHelper::success(
+            UserResource::collection($users),
+            meta: [
+                'total' => $total,
+                'page' => $pageNumber,
+                'pageSize' => $pageSize,
+                'totalPages' => ceil($total / $pageSize),
+            ]
+        );
+    }
+
+    public function show(string $id): \Illuminate\Http\JsonResponse
+    {
+        $user = User::findOrFail($id);
+
+        // Load roles if exists
+        try {
+            $user->load(['roles' => function ($q) {
+                $q->select('roles.id', 'roles.name', 'roles.slug');
+            }]);
+        } catch (\Exception $e) {
+            // Roles relation doesn't exist
+        }
+
         return ResponseHelper::success(new UserResource($user));
     }
 
     /**
-     * @OA\Put(
-     *     path="/user",
-     *     summary="Update user profile",
-     *     description="Updates the user's name and job title in the profile",
-     *     operationId="updateUserProfile",
-     *     tags={"User"},
+     * View user by ID (URL parameter).
      *
-     *     @OA\RequestBody(
+     * @OA\Post(
+     *      path="/Admin/Users/View/{id}",
+     *      summary="View user by ID",
+     *      description="Get user details by ID",
+     *      tags={"Admins"},
+     *      security={{"bearerAuth": {}}},
+     *
+     *      @OA\Parameter(
+     *          name="id",
+     *          in="path",
      *          required=true,
-     *
-     *          @OA\JsonContent(ref="#/components/schemas/UserUpdateRequest")
+     *          description="User ID",
+     *          @OA\Schema(type="string", format="uuid")
      *      ),
      *
-     *     @OA\Response(
-     *         response=204,
-     *         description="Profile updated successfully",
+     *      @OA\Response(
+     *          response=200,
+     *          description="User retrieved successfully",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="status", type="string", example="success"),
+     *              @OA\Property(property="statusCode", type="integer", example=200),
+     *              @OA\Property(property="data", ref="#/components/schemas/UserResource")
+     *          )
+     *      ),
      *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Profile updated successfully"),
-     *             @OA\Property(property="status", type="string", example="success"),
-     *             @OA\Property(property="statusCode", type="integer", example=204),
-     *             @OA\Property(property="data", type="object", ref="#/components/schemas/UserResource"),
-     *         ),
-     *     ),
-     *
-     *     @OA\Response(response=401, ref="#/components/responses/401"),
-     *     @OA\Response(response=422, ref="#/components/responses/422"),
-     *     @OA\Response(response=500, ref="#/components/responses/500"),
-     *      security={
-     *          {"bearerAuth": {}}
-     *      }
+     *      @OA\Response(response=401, ref="#/components/responses/401"),
+     *      @OA\Response(response=404, ref="#/components/responses/404"),
      * )
      */
+    public function view(string $id): \Illuminate\Http\JsonResponse
+    {
+        $user = User::findOrFail($id);
+
+        // Load roles if exists
+        try {
+            $user->load(['roles' => function ($q) {
+                $q->select('roles.id', 'roles.name', 'roles.slug');
+            }]);
+        } catch (\Exception $e) {
+            // Roles relation doesn't exist
+        }
+
+        return ResponseHelper::success(new UserResource($user));
+    }
+
     public function update(Request $request): \Illuminate\Http\JsonResponse
     {
         $user = auth()->user();
@@ -64,48 +143,6 @@ final class UserController extends Controller
         return ResponseHelper::success(data: new UserResource($user), message: 'Profile updated successfully');
     }
 
-    /**
-     * @OA\Put(
-     *     path="/user/change-password",
-     *     summary="Change User Password",
-     *     description="Change the user's password.",
-     *     operationId="changePassword",
-     *     tags={"User"},
-     *     security={{"bearerAuth":{}}},
-     *
-     *     @OA\RequestBody(
-     *         required=true,
-     *         description="Password change request data",
-     *
-     *         @OA\MediaType(
-     *             mediaType="application/json",
-     *
-     *             @OA\Schema(
-     *
-     *                 @OA\Property(property="current_password", type="string", description="Current password", example="old_password"),
-     *                 @OA\Property(property="new_password", type="string", description="New password", example="new_password"),
-     *                 @OA\Property(property="new_password_confirmation", type="string", description="Confirm new password", example="new_password"),
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Password changed successfully",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Password changed successfully"),
-     *             @OA\Property(property="status", type="string", example="success"),
-     *             @OA\Property(property="statusCode", type="integer", example=200),
-     *         )
-     *     ),
-     *
-     *     @OA\Response(response=401, ref="#/components/responses/401"),
-     *     @OA\Response(response=422, ref="#/components/responses/422"),
-     *     @OA\Response(response=500, ref="#/components/responses/500"),
-     * )
-     */
     public function changePassword(Request $request)
     {
         $user = auth()->user();
@@ -124,5 +161,53 @@ final class UserController extends Controller
         ]);
 
         return ResponseHelper::success('Password changed successfully');
+    }
+
+    /**
+     * Delete a user (hard delete).
+     *
+     * @OA\Post(
+     *      path="/Admin/Users/Delete/{id}",
+     *      summary="Delete a user",
+     *      description="Permanently delete a user by ID from database",
+     *      tags={"Admins"},
+     *      security={{"bearerAuth": {}}},
+     *
+     *      @OA\Parameter(
+     *          name="id",
+     *          in="path",
+     *          required=true,
+     *          description="User ID",
+     *          @OA\Schema(type="string", format="uuid")
+     *      ),
+     *
+     *      @OA\Response(
+     *          response=200,
+     *          description="User deleted successfully",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="status", type="string", example="success"),
+     *              @OA\Property(property="message", type="string", example="User deleted successfully"),
+     *              @OA\Property(property="statusCode", type="integer", example=200)
+     *          )
+     *      ),
+     *
+     *      @OA\Response(response=401, ref="#/components/responses/401"),
+     *      @OA\Response(response=403, ref="#/components/responses/403"),
+     *      @OA\Response(response=404, ref="#/components/responses/404"),
+     * )
+     */
+    public function destroy(string $id): \Illuminate\Http\JsonResponse
+    {
+        $user = User::findOrFail($id);
+
+        // Prevent deletion of self
+        if (auth()->id() === $user->id) {
+            return ResponseHelper::error('Cannot delete your own account', 403);
+        }
+
+        // Hard delete - permanently remove from database
+        $user->forceDelete();
+
+        return ResponseHelper::success(message: 'User deleted successfully');
     }
 }

@@ -19,19 +19,34 @@ final class AuthenticationService
     {
         $expiry = intval(config('sanctum.expiration'));
         $device = Str::limit(request()->userAgent(), 255);
-        $token = $user->createToken($device, ['*'], now()->addMinutes($expiry))->plainTextToken;
 
-        return $token;
+        // Create access token
+        $tokenResult = $user->createToken($device, ['*'], now()->addMinutes($expiry));
+
+        // Update with refresh_token
+        $accessToken = $tokenResult->accessToken;
+        $accessToken->refresh_token = Str::random(64);
+        $accessToken->refresh_token_expires_at = now()->addMinutes($expiry * 2); // Refresh token expires later
+        $accessToken->save();
+
+        return $tokenResult->plainTextToken;
     }
 
-    public static function authLoginResponse(User $user, ?string $accessToken = null): \Illuminate\Http\JsonResponse
+    public static function authLoginResponse(User|\Modules\V1\Admin\Models\Admin $user, ?string $accessToken = null): \Illuminate\Http\JsonResponse
     {
         $inactivityTimeout = intval(config('sanctum.expiration'));
 
         $token = $accessToken ?? AuthenticationService::createToken($user);
 
+        // Use appropriate resource based on user type
+        if ($user instanceof \Modules\V1\Admin\Models\Admin) {
+            $resource = new \Modules\V1\Admin\Resources\AdminResource($user);
+        } else {
+            $resource = new UserResource($user);
+        }
+
         return ResponseHelper::success(
-            data: new UserResource($user),
+            data: $resource,
             message: 'Login successful',
             meta: [
                 'accessToken' => $token,

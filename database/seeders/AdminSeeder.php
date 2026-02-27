@@ -20,17 +20,35 @@ class AdminSeeder extends Seeder
         DB::transaction(function () {
             $timestamp = DateTimeHelper::timestamp();
 
-            Admin::firstOrCreate([
-                'first_name' => 'Super',
-                'last_name' => 'Admin',
-                'email' => 'admin@gmail.com',
-                'password' => Hash::make(GlobalHelper::generateRandomCharacters()),
-                'email_verified_at' => now(),
-                'status' => StatusEnum::ACTIVE,
-                'super_admin' => true,
-                'created_at' => $timestamp,
-                'updated_at' => $timestamp,
-            ]);
+            $admin = Admin::firstOrCreate(
+                ['email' => 'admin@gmail.com'],
+                [
+                    'first_name' => 'Super',
+                    'last_name' => 'Admin',
+                    'password' => Hash::make(env('ADMIN_DEFAULT_PASSWORD', 'admin123')),
+                    'email_verified_at' => now(),
+                    'status' => StatusEnum::ACTIVE,
+                    'super_admin' => true,
+                    'created_at' => $timestamp,
+                    'updated_at' => $timestamp,
+                ]
+            );
+
+            // Assign Super Admin role (role_id = 1)
+            $existingRole = DB::table('role_user')
+                ->where('user_id', $admin->id)
+                ->where('role_id', 1)
+                ->first();
+
+            if (!$existingRole) {
+                DB::table('role_user')->insert([
+                    'user_id' => $admin->id,
+                    'role_id' => 1, // Super Admin
+                    'created_at' => time(),
+                    'updated_at' => time(),
+                ]);
+                $this->command->info('✅ Assigned Super Admin role to admin user');
+            }
         });
     }
 }

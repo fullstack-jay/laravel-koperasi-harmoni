@@ -37,12 +37,17 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
+        'username',
         'email',
         'password',
         'role_id',
         'provider_id',
         'provider_type',
         'oauth',
+        'supplier_id',
+        'dapur_id',
     ];
 
     /**
@@ -65,6 +70,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Roles relationship
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(\Modules\V1\Admin\Models\AdminRole::class, 'role_user', 'user_id', 'role_id');
     }
 
     /**

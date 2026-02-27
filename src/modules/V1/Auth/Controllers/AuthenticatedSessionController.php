@@ -30,9 +30,9 @@ final class AuthenticatedSessionController extends Controller
      *         description="User credentials",
      *
      *         @OA\JsonContent(
-     *             required={"email", "password"},
+     *             required={"identity", "password"},
      *
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+     *             @OA\Property(property="identity", type="string", example="user@example.com or username"),
      *             @OA\Property(property="password", type="string", format="password", example="password123"),
      *         ),
      *     ),
@@ -56,18 +56,46 @@ final class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): \Illuminate\Http\JsonResponse
     {
-        $user = User::where('email', $request->email)->first();
+        $identity = $request->identity;
 
-        if ( ! $user || ! Hash::check($request->password, $user->password)) {
+        // Check if identity is email or username
+        $field = filter_var($identity, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        // Try to find user in both tables
+        $user = User::where($field, $identity)->first();
+
+        // If not found in users, try admins
+        if (!$user) {
+            $user = \Modules\V1\Admin\Models\Admin::where($field, $identity)->first();
+        }
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
             return ResponseHelper::error('Invalid credentials', 401);
         }
 
-        if ($user && ! $user->hasVerifiedEmail()) {
+        // Check email verification only for regular users (not admins)
+        if ($user instanceof User && !$user->hasVerifiedEmail()) {
             return ResponseHelper::error('Email not verified. Kindly verify your email', 403);
         }
 
-        return AuthenticationService::authLoginResponse($user);
+        // Load roles for both admin and user
+        if ($user instanceof \Modules\V1\Admin\Models\Admin || $user instanceof User) {
+            try {
+                // Use query builder to avoid ambiguous column errors
+                $roles = \Illuminate\Support\Facades\DB::table('role_user')
+                    ->join('roles', 'role_user.role_id', '=', 'roles.id')
+                    ->where('role_user.user_id', $user->id)
+                    ->select('roles.id', 'roles.name', 'roles.slug')
+                    ->get();
 
+                // Set roles as attribute to avoid lazy loading
+                $user->setRelation('roles', $roles);
+            } catch (\Exception $e) {
+                // Roles table doesn't exist or no roles assigned
+            }
+        }
+
+        return AuthenticationService::authLoginResponse($user);
     }
 
     /**

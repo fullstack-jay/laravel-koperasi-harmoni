@@ -18,12 +18,8 @@ namespace App\Http\Controllers\V1;
  *     bearerFormat="JWT"
  * ),
  * @OA\Server(
- *     description="Base URL",
- *     url="https://domain.dev/v1"
- * ),
- * @OA\Server(
- *     description="Local Base URL",
- *     url="http://127.0.0.1:8000/v1"
+ *     description="Local Development",
+ *     url="http://127.0.0.1:8000/api/v1"
  * ),
  * @OA\Response(
  *     response=500,

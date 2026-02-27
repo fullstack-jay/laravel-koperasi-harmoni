@@ -137,7 +137,7 @@ class ActivityLog extends BaseModel
     /**
      * Check if this activity has changes.
      */
-    public function hasChanges(): bool
+    public function hasActivityChanges(): bool
     {
         return $this->getChanges()->isNotEmpty();
     }

@@ -15,7 +15,7 @@ final class AdminActivityLogController extends Controller
 {
     public function activityLogs(): JsonResponse
     {
-        $logs = AdminActivityLog::with('admin')->latest()->paginate();
+        $logs = AdminActivityLog::with('admin')->latest()->limit(100)->get();
 
         return ResponseHelper::success(data: AdminActivityLogResource::collection($logs));
     }
@@ -26,7 +26,8 @@ final class AdminActivityLogController extends Controller
             ->where('model_type', User::class)
             ->where('model_id', $user->id)
             ->latest()
-            ->paginate();
+            ->limit(100)
+            ->get();
 
         return ResponseHelper::success(data: AdminActivityLogResource::collection($logs));
     }

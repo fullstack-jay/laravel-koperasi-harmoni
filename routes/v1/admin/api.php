@@ -2,17 +2,19 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\V1\Admin\Controllers\AdminController;
-use Modules\V1\Admin\Controllers\Auth\LogoutController;
 
-Route::put('/me', [AdminController::class, 'show']);
-Route::put('/update', [AdminController::class, 'update']);
-Route::put('/change-password', [AdminController::class, 'changePassword']);
-Route::post('/auth/logout', LogoutController::class)->name('logout');
+// Admin profile routes
+Route::post('/me', [AdminController::class, 'show']);
+Route::post('/update', [AdminController::class, 'update']);
+Route::post('/change-password', [AdminController::class, 'changePassword']);
+
+// Admin logout removed - using unified /auth/logout instead
+// Route::post('/auth/logout', LogoutController::class)->name('logout');
 
 /**
  * Users Routes
  */
-Route::prefix('users')->as('users:')->group(
+Route::prefix('Users')->as('users:')->group(
     base_path('routes/v1/admin/users.php'),
 );
 
@@ -26,5 +28,6 @@ Route::prefix('logs')->as('logs:')->group(
 Route::as('')->group(
     base_path('routes/v1/admin/admin.php'),
 );
+
 
 

@@ -21,8 +21,8 @@ final class GoogleAuthController extends Controller
     /**
      * Get the Google authentication URL.
      *
-     * @OA\Get(
-     *     path="/auth/oauth/google",
+     * @OA\Post(
+     *     path="/auth/google/url",
      *     summary="Get Google authentication URL",
      *     tags={"Authentication"},
      *

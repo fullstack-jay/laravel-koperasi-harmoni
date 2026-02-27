@@ -14,7 +14,14 @@ final class AdminRole extends Model
 {
     use HasFactory;
 
-    protected $with = ['permissions'];
+    // Removed auto-eager load permissions to avoid pivot table errors
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'roles';
 
     /**
      * The storage format of the model's date columns.
@@ -41,7 +48,7 @@ final class AdminRole extends Model
 
     public function permissions()
     {
-        return $this->belongsToMany(Permission::class);
+        return $this->belongsToMany(Permission::class, 'permission_role', 'role_id', 'permission_id');
     }
 
     /**
