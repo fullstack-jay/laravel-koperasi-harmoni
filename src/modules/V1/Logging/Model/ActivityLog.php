@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Modules\V1\User\Models\User;
+use Modules\V1\Logging\Enums\SeverityEnum;
 use Shared\Models\BaseModel;
 
 class ActivityLog extends BaseModel
@@ -18,6 +19,7 @@ class ActivityLog extends BaseModel
         'subject_type',
         'subject_id',
         'event',
+        'severity',
         'user_id',
         'causer_type',
         'properties',
@@ -36,6 +38,15 @@ class ActivityLog extends BaseModel
         'new_values' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+    ];
+
+    /**
+     * The accessors to append to the model's array form.
+     */
+    protected $appends = [
+        'severity_color',
+        'severity_icon',
+        'severity_label',
     ];
 
     /**
@@ -201,5 +212,91 @@ class ActivityLog extends BaseModel
         }
 
         return str_replace(array_keys($replacements), array_values($replacements), $description);
+    }
+
+    /**
+     * Get severity enum instance
+     */
+    public function getSeverityEnum(): SeverityEnum
+    {
+        return SeverityEnum::from($this->severity ?? 'info');
+    }
+
+    /**
+     * Get severity color for UI
+     */
+    public function getSeverityColorAttribute(): string
+    {
+        return $this->getSeverityEnum()->getColor();
+    }
+
+    /**
+     * Get severity icon
+     */
+    public function getSeverityIconAttribute(): string
+    {
+        return $this->getSeverityEnum()->getIcon();
+    }
+
+    /**
+     * Get severity label
+     */
+    public function getSeverityLabelAttribute(): string
+    {
+        return $this->getSeverityEnum()->getLabel();
+    }
+
+    /**
+     * Auto-detect and set severity from event before saving
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($log) {
+            if (empty($log->severity) && !empty($log->event)) {
+                $log->severity = SeverityEnum::fromEvent($log->event)->value;
+            }
+        });
+    }
+
+    /**
+     * Scope to filter by severity
+     */
+    public function scopeWithSeverity(Builder $query, string $severity): Builder
+    {
+        return $query->where('severity', $severity);
+    }
+
+    /**
+     * Scope to get only errors
+     */
+    public function scopeErrors(Builder $query): Builder
+    {
+        return $query->where('severity', 'error');
+    }
+
+    /**
+     * Scope to get only warnings
+     */
+    public function scopeWarnings(Builder $query): Builder
+    {
+        return $query->where('severity', 'warning');
+    }
+
+    /**
+     * Scope to get only success
+     */
+    public function scopeSuccess(Builder $query): Builder
+    {
+        return $query->where('severity', 'success');
+    }
+
+    /**
+     * Scope to get only info
+     */
+    public function scopeInfo(Builder $query): Builder
+    {
+        return $query->where('severity', 'info');
     }
 }

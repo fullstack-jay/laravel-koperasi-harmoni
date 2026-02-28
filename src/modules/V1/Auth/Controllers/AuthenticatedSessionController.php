@@ -13,6 +13,7 @@ use Modules\V1\Auth\Requests\LoginRequest;
 use Modules\V1\Auth\Services\AuthenticationService;
 use Modules\V1\User\Models\User;
 use Modules\V1\User\Resources\UserResource;
+use Shared\Helpers\ActivityHelper;
 use Shared\Helpers\ResponseHelper;
 
 final class AuthenticatedSessionController extends Controller
@@ -70,6 +71,9 @@ final class AuthenticatedSessionController extends Controller
         }
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            // Track failed login attempts
+            $this->trackFailedLogin($request, $user, $field, $identity);
+
             return ResponseHelper::error('Invalid credentials', 401);
         }
 
@@ -94,6 +98,12 @@ final class AuthenticatedSessionController extends Controller
                 // Roles table doesn't exist or no roles assigned
             }
         }
+
+        // Log login activity
+        ActivityHelper::logLogin([
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
 
         return AuthenticationService::authLoginResponse($user);
     }
@@ -129,6 +139,11 @@ final class AuthenticatedSessionController extends Controller
         if ( ! Auth::check()) {
             return ResponseHelper::error('Unauthenticated', 401);
         }
+
+        // Log logout activity BEFORE revoking token
+        ActivityHelper::logLogout([
+            'ip_address' => $request->ip(),
+        ]);
 
         $request->user()->tokens()->delete();
 
@@ -171,5 +186,61 @@ final class AuthenticatedSessionController extends Controller
                 'expires_in' => config('sanctum.expiration'),
             ],
         );
+    }
+
+    /**
+     * Track failed login attempts
+     */
+    private function trackFailedLogin(Request $request, $user, string $field, string $identity): void
+    {
+        // Get or create session key for tracking attempts
+        $sessionKey = 'login_attempts_' . $field . '_' . $identity;
+        $attempts = session($sessionKey, 0) + 1;
+        session([$sessionKey => $attempts]);
+
+        // Get user object for logging (if exists)
+        $logUser = $user ?? ($field === 'email'
+            ? \Modules\V1\User\Models\User::withTrashed()->where('email', $identity)->first()
+            : \Modules\V1\User\Models\User::withTrashed()->where('username', $identity)->first());
+
+        // Try admin if not found in users
+        if (!$logUser) {
+            $logUser = ($field === 'email'
+                ? \Modules\V1\Admin\Models\Admin::withTrashed()->where('email', $identity)->first()
+                : \Modules\V1\Admin\Models\Admin::withTrashed()->where('username', $identity)->first());
+        }
+
+        $description = $logUser
+            ? "Failed login attempt for {$field}: {$identity} (Attempt {$attempts})"
+            : "Failed login attempt for non-existent {$field}: {$identity} (Attempt {$attempts})";
+
+        // Log the failed attempt
+        \Modules\V1\Logging\Facades\Activity::causedBy($logUser)
+            ->event(\Modules\V1\Logging\Enums\LogEventEnum::LOGIN_FAILED)
+            ->withProperties([
+                'identity_field' => $field,
+                'identity_value' => $identity,
+                'attempt_number' => $attempts,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log($description);
+
+        // If 3rd failed attempt, log additional warning
+        if ($attempts >= 3) {
+            \Modules\V1\Logging\Facades\Activity::causedBy($logUser)
+                ->withProperties([
+                    'identity_field' => $field,
+                    'identity_value' => $identity,
+                    'total_attempts' => $attempts,
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'blocked' => true,
+                ])
+                ->log("Multiple failed login attempts ({$attempts}) for {$field}: {$identity}", false, 'multiple_login_failed');
+
+            // Clear attempts after 3 to reset
+            session([$sessionKey => 0]);
+        }
     }
 }

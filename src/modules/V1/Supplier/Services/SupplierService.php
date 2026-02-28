@@ -124,4 +124,120 @@ class SupplierService
 
         return $supplier;
     }
+
+    /**
+     * Get or create supplier from user request data
+     * Used specifically in user creation/update flows
+     *
+     * @param array $requestData
+     * @param string $defaultEmail
+     * @param string $defaultContactPerson
+     * @param string|null $existingSupplierId
+     * @return string|null Supplier ID or null if no supplier data
+     * @throws Exception
+     */
+    public function getOrCreateForUser(
+        array $requestData,
+        string $defaultEmail,
+        string $defaultContactPerson,
+        ?string $existingSupplierId = null
+    ): ?string {
+        // If existing supplier ID is provided and no new data, return existing
+        if ($existingSupplierId && !$this->hasSupplierData($requestData)) {
+            return $existingSupplierId;
+        }
+
+        // If existing supplier and has new data, update it
+        if ($existingSupplierId && $this->hasSupplierData($requestData)) {
+            return $this->updateForUser($existingSupplierId, $requestData, $defaultContactPerson);
+        }
+
+        // Create new supplier if has data
+        if ($this->hasSupplierData($requestData)) {
+            return $this->createForUser($requestData, $defaultEmail, $defaultContactPerson);
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if request has supplier data
+     */
+    private function hasSupplierData(array $data): bool
+    {
+        $supplierData = $data['supplier_data'] ?? [];
+
+        return !empty($supplierData['name'])
+            || !empty($supplierData['supplier_code'])
+            || !empty($data['supplierKategori'])
+            || !empty($data['supplierNama']);
+    }
+
+    /**
+     * Create new supplier from user request
+     */
+    private function createForUser(array $requestData, string $defaultEmail, string $defaultContactPerson): string
+    {
+        $supplierData = \Modules\V1\Supplier\DTOs\SupplierData::fromRequest(
+            $requestData,
+            $defaultEmail,
+            $defaultContactPerson
+        );
+
+        if (empty($supplierData->code)) {
+            throw new Exception('Supplier code is required');
+        }
+
+        $supplier = Supplier::create($supplierData->toArray());
+
+        return $supplier->id;
+    }
+
+    /**
+     * Update existing supplier from user request
+     */
+    private function updateForUser(string $supplierId, array $requestData, string $defaultContactPerson): string
+    {
+        $supplier = Supplier::find($supplierId);
+
+        if (!$supplier) {
+            throw new Exception('Supplier not found');
+        }
+
+        $supplierData = \Modules\V1\Supplier\DTOs\SupplierData::fromRequest(
+            $requestData,
+            $supplier->email,
+            $defaultContactPerson
+        );
+
+        // Update fields if provided
+        if ($supplierData->code) {
+            $supplier->code = $supplierData->code;
+        }
+        if ($supplierData->name) {
+            $supplier->name = $supplierData->name;
+        }
+        if ($supplierData->contactPerson) {
+            $supplier->contact_person = $supplierData->contactPerson;
+        }
+        if ($supplierData->phone) {
+            $supplier->phone = $supplierData->phone;
+        }
+        if ($supplierData->email) {
+            $supplier->email = $supplierData->email;
+        }
+        if ($supplierData->address) {
+            $supplier->address = $supplierData->address;
+        }
+        if ($supplierData->district) {
+            $supplier->district = $supplierData->district;
+        }
+        if ($supplierData->supplierType) {
+            $supplier->supplier_type = $supplierData->supplierType;
+        }
+
+        $supplier->save();
+
+        return $supplier->id;
+    }
 }

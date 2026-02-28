@@ -18,7 +18,7 @@ Route::prefix('Users')->as('users:')->group(
     base_path('routes/v1/admin/users.php'),
 );
 
-Route::prefix('logs')->as('logs:')->group(
+Route::prefix('Logs')->as('logs:')->group(
     base_path('routes/v1/admin/log.php'),
 );
 

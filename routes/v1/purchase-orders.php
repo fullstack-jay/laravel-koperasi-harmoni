@@ -16,13 +16,13 @@ use Modules\V1\PurchaseOrder\Controllers\POCancelController;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth:sanctum', 'role:procurement,gudang,keuangan'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:koperasi'])->group(function () {
     // List and view POs
     Route::post('/purchase-orders/list', [POController::class, 'index']);
     Route::post('/purchase-orders/{po}', [POController::class, 'show']);
 
     // Create PO
-    Route::post('/purchase-orders/create', POCreateController::class);
+    Route::post('/purchase-orders/Create', POCreateController::class);
 
     // Update PO
     Route::post('/purchase-orders/{po}/update', [POUpdateController::class, 'update']);

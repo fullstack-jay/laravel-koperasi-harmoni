@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\V1\Stock\Models;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Shared\Models\BaseModel;
 use Shared\Traits\HasAuditColumns;
@@ -19,9 +20,11 @@ class StockItem extends BaseModel
         'category',
         'unit',
         'min_stock',
+        'max_stock',
         'buy_price',
         'sell_price',
         'current_stock',
+        'supplier_id',
         'created_by',
         'updated_by',
     ];
@@ -30,8 +33,17 @@ class StockItem extends BaseModel
         'buy_price' => 'decimal:2',
         'sell_price' => 'decimal:2',
         'min_stock' => 'integer',
+        'max_stock' => 'integer',
         'current_stock' => 'integer',
     ];
+
+    /**
+     * Relationship: Stock item belongs to supplier
+     */
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\V1\Supplier\Models\Supplier::class);
+    }
 
     /**
      * Relationship: Stock item has many batches
@@ -63,6 +75,22 @@ class StockItem extends BaseModel
     public function isLowStock(): bool
     {
         return $this->current_stock < $this->min_stock;
+    }
+
+    /**
+     * Check if stock is above maximum
+     */
+    public function isOverStock(): bool
+    {
+        return $this->current_stock > $this->max_stock;
+    }
+
+    /**
+     * Check if stock is within optimal range
+     */
+    public function isOptimalStock(): bool
+    {
+        return $this->current_stock >= $this->min_stock && $this->current_stock <= $this->max_stock;
     }
 
     /**

@@ -219,4 +219,20 @@ return [
         'server' => env('SERVER_NAME', gethostname()),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Activity Logs Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Konfigurasi untuk retensi dan pembersihan database activity logs
+    |
+    */
+
+    'lama_hari_penyimpanan' => env('LAMA_HARI_PENYIMPANAN_LOG', 90),
+    'pembersihan_otomatis' => env('PEMBERSIHAN_OTOMATIS_LOG', true),
+    'jadwal_pembersihan' => env('JADWAL_PEMBERSIHAN_LOG', 'weekly'), // daily, weekly, monthly
+    'waktu_pembersihan' => env('WAKTU_PEMBERSIHAN_LOG', '02:00'),
+    'arsip_diaktifkan' => env('ARSIP_LOG_DIAKTIFKAN', false),
+    'arsip_setelah_hari' => env('ARSIP_LOG_SETELAH_HARI', 180), // Arsipkan logs lebih lama dari 180 hari alih-alih menghapus
+
 ];

@@ -21,7 +21,7 @@ final class StockItemController
 
     /**
      * @OA\Post(
-     *      path="/stock/items/list",
+     *      path="/Stock/Items/LoadData",
      *      summary="Get all stock items",
      *      description="Returns a paginated list of all stock items.",
      *      tags={"Stock"},
@@ -87,7 +87,7 @@ final class StockItemController
 
     /**
      * @OA\Post(
-     *     path="/stock/items/create",
+     *     path="/Stock/Items/Create",
      *     summary="Create a new stock item",
      *     description="Create a new stock item with pricing and stock information",
      *     tags={"Stock"},
@@ -99,15 +99,17 @@ final class StockItemController
      *             mediaType="application/json",
      *
      *             @OA\Schema(
-     *                 required={"code", "name", "category", "unit", "min_stock", "buy_price", "sell_price"},
+     *                 required={"code", "name", "category", "unit", "min_stock", "max_stock", "buy_price", "sell_price", "supplier_id"},
      *
-     *                 @OA\Property(property="code", type="string", example="STK-001"),
-     *                 @OA\Property(property="name", type="string", example="Beras Premium 25kg"),
-     *                 @OA\Property(property="category", type="string", example="Beras"),
-     *                 @OA\Property(property="unit", type="string", example="karung"),
-     *                 @OA\Property(property="min_stock", type="integer", example=50, description="Minimum stock level for alerts"),
-     *                 @OA\Property(property="buy_price", type="number", format="float", example=150000),
-     *                 @OA\Property(property="sell_price", type="number", format="float", example=165000)
+     *                 @OA\Property(property="code", type="string", example="STK-001", description="Unique item code/SKU"),
+     *                 @OA\Property(property="name", type="string", example="Beras Premium 25kg", description="Item name"),
+     *                 @OA\Property(property="category", type="string", example="Beras", description="Item category"),
+     *                 @OA\Property(property="unit", type="string", example="karung", description="Unit of measurement (kg, liter, pcs, etc)"),
+     *                 @OA\Property(property="min_stock", type="integer", example=50, description="Minimum stock level for low stock alerts"),
+     *                 @OA\Property(property="max_stock", type="integer", example=500, description="Maximum stock level for overstock alerts"),
+     *                 @OA\Property(property="buy_price", type="number", format="float", example=150000, description="Last purchase price per unit"),
+     *                 @OA\Property(property="sell_price", type="number", format="float", example=165000, description="Selling price per unit"),
+     *                 @OA\Property(property="supplier_id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000", description="Supplier UUID - ID supplier yang terdaftar")
      *             )
      *         )
      *     ),
@@ -152,7 +154,7 @@ final class StockItemController
 
     /**
      * @OA\Post(
-     *     path="/stock/items/detail/{id}",
+     *     path="/Stock/Items/View/{id}",
      *     summary="Get stock item detail",
      *     description="Get detailed information about a specific stock item",
      *     tags={"Stock"},
@@ -204,7 +206,7 @@ final class StockItemController
 
     /**
      * @OA\Post(
-     *     path="/stock/items/update/{id}",
+     *     path="/Stock/Items/Update/{id}",
      *     summary="Update stock item",
      *     description="Update an existing stock item's information",
      *     tags={"Stock"},
@@ -226,13 +228,15 @@ final class StockItemController
      *
      *             @OA\Schema(
      *
-     *                 @OA\Property(property="code", type="string", example="STK-001"),
-     *                 @OA\Property(property="name", type="string", example="Beras Premium 25kg"),
-     *                 @OA\Property(property="category", type="string", example="Beras"),
-     *                 @OA\Property(property="unit", type="string", example="karung"),
-     *                 @OA\Property(property="min_stock", type="integer", example=50),
-     *                 @OA\Property(property="buy_price", type="number", format="float", example=150000),
-     *                 @OA\Property(property="sell_price", type="number", format="float", example=165000)
+     *                 @OA\Property(property="code", type="string", example="STK-001", description="Unique item code/SKU"),
+     *                 @OA\Property(property="name", type="string", example="Beras Premium 25kg", description="Item name"),
+     *                 @OA\Property(property="category", type="string", example="Beras", description="Item category"),
+     *                 @OA\Property(property="unit", type="string", example="karung", description="Unit of measurement"),
+     *                 @OA\Property(property="min_stock", type="integer", example=50, description="Minimum stock level"),
+     *                 @OA\Property(property="max_stock", type="integer", example=500, description="Maximum stock level"),
+     *                 @OA\Property(property="buy_price", type="number", format="float", example=150000, description="Last purchase price"),
+     *                 @OA\Property(property="sell_price", type="number", format="float", example=165000, description="Selling price"),
+     *                 @OA\Property(property="supplier_id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000", description="ID supplier yang terdaftar")
      *             )
      *         )
      *     ),
@@ -276,7 +280,7 @@ final class StockItemController
 
     /**
      * @OA\Post(
-     *     path="/stock/items/delete/{id}",
+     *     path="/Stock/Items/Delete/{id}",
      *     summary="Delete stock item",
      *     description="Delete a stock item",
      *     tags={"Stock"},

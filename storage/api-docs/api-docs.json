@@ -8,6 +8,9 @@
         {
             "url": "http://127.0.0.1:8000/api/v1",
             "description": "Local Development"
+        },
+        {
+            "url": "/api/v1"
         }
     ],
     "paths": {
@@ -32,7 +35,7 @@
                                         "example": "john"
                                     },
                                     "sortColumn": {
-                                        "description": "Column to sort by (namaLengkap, username, email, role, created_at, id)",
+                                        "description": "Column to sort by (fullName, username, email, role, created_at, id)",
                                         "type": "string",
                                         "example": "created_at"
                                     },
@@ -211,17 +214,23 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "namaLengkap",
+                                    "firstName",
+                                    "lastName",
                                     "username",
                                     "email",
                                     "password",
                                     "role"
                                 ],
                                 "properties": {
-                                    "namaLengkap": {
-                                        "description": "Full name",
+                                    "firstName": {
+                                        "description": "First name",
                                         "type": "string",
-                                        "example": "John Doe"
+                                        "example": "John"
+                                    },
+                                    "lastName": {
+                                        "description": "Last name",
+                                        "type": "string",
+                                        "example": "Doe"
                                     },
                                     "username": {
                                         "description": "Username",
@@ -287,37 +296,18 @@
                             }
                         }
                     },
-                    "209": {
-                        "description": "Account already exists",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "error"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Account already exists"
-                                        },
-                                        "statusCode": {
-                                            "type": "integer",
-                                            "example": 209
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
                     "422": {
                         "$ref": "#/components/responses/422"
                     },
                     "500": {
                         "$ref": "#/components/responses/500"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/Admin/Users/Update/{id}": {
@@ -346,16 +336,22 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "namaLengkap",
+                                    "firstName",
+                                    "lastName",
                                     "username",
                                     "email",
                                     "role"
                                 ],
                                 "properties": {
-                                    "namaLengkap": {
-                                        "description": "Full name",
+                                    "firstName": {
+                                        "description": "First name",
                                         "type": "string",
-                                        "example": "John Doe"
+                                        "example": "John"
+                                    },
+                                    "lastName": {
+                                        "description": "Last name",
+                                        "type": "string",
+                                        "example": "Doe"
                                     },
                                     "username": {
                                         "description": "Username",
@@ -1664,6 +1660,488 @@
                 ]
             }
         },
+        "/Admin/Logs/Activities/Storage-Stats": {
+            "post": {
+                "tags": [
+                    "Activity Logs"
+                ],
+                "summary": "Get activity log storage statistics",
+                "description": "Retrieve storage usage statistics for activity logs including table size, row count, retention info, and recommendations",
+                "operationId": "862cc34e21e19c7f892c89c33030253a",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "statusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_records": {
+                                                    "type": "integer",
+                                                    "example": 50000
+                                                },
+                                                "table_size_mb": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 125.5
+                                                },
+                                                "data_size_mb": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 80.3
+                                                },
+                                                "indexes_size_mb": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 45.2
+                                                },
+                                                "oldest_record": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15 10:30:00"
+                                                },
+                                                "newest_record": {
+                                                    "type": "string",
+                                                    "example": "2025-02-27 15:30:00"
+                                                },
+                                                "records_last_30_days": {
+                                                    "type": "integer",
+                                                    "example": 15000
+                                                },
+                                                "records_last_7_days": {
+                                                    "type": "integer",
+                                                    "example": 3500
+                                                },
+                                                "avg_records_per_day": {
+                                                    "type": "integer",
+                                                    "example": 500
+                                                },
+                                                "projected_records_in_90_days": {
+                                                    "type": "integer",
+                                                    "example": 45000
+                                                },
+                                                "projected_size_in_90_days_mb": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 250.5
+                                                },
+                                                "retention_policy": {
+                                                    "properties": {
+                                                        "lama_hari_penyimpanan": {
+                                                            "type": "integer",
+                                                            "example": 90
+                                                        },
+                                                        "pembersihan_otomatis_diaktifkan": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "pembersihan_berikutnya": {
+                                                            "type": "string",
+                                                            "example": "2025-03-02 02:00:00"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "recommendations": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "Pertimbangkan untuk mengurangi masa penyimpanan dari 90 menjadi 30-60 hari"
+                                                    ]
+                                                },
+                                                "warnings": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "health_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "healthy",
+                                                        "warning"
+                                                    ],
+                                                    "example": "healthy"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/401"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/Admin/Logs/Activities/LoadData": {
+            "post": {
+                "tags": [
+                    "Activity Logs"
+                ],
+                "summary": "Get all activity logs (List)",
+                "description": "Retrieve paginated list of all admin activity logs with search and sorting capabilities",
+                "operationId": "93af731e2e72af7dd2ec5474bbb10f95",
+                "requestBody": {
+                    "description": "Optional parameters for filtering, pagination, and sorting",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "search": {
+                                        "description": "Global search by event, description, or admin name",
+                                        "type": "string",
+                                        "example": ""
+                                    },
+                                    "pageNumber": {
+                                        "description": "Page number",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "pageSize": {
+                                        "description": "Items per page",
+                                        "type": "integer",
+                                        "example": 15
+                                    },
+                                    "sortColumn": {
+                                        "description": "Column to sort by (id, event, description, created_at)",
+                                        "type": "string",
+                                        "example": "created_at"
+                                    },
+                                    "sortColumnDir": {
+                                        "description": "Sort direction (asc or desc)",
+                                        "type": "string",
+                                        "enum": [
+                                            "asc",
+                                            "desc"
+                                        ],
+                                        "example": "desc"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "statusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "no": {
+                                                        "description": "Nomor urut",
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid"
+                                                    },
+                                                    "event": {
+                                                        "type": "string",
+                                                        "example": "login"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "User logged in"
+                                                    },
+                                                    "severity": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "info",
+                                                            "warning",
+                                                            "error",
+                                                            "success"
+                                                        ],
+                                                        "example": "success"
+                                                    },
+                                                    "severityColor": {
+                                                        "type": "string",
+                                                        "example": "#10B981"
+                                                    },
+                                                    "severityIcon": {
+                                                        "type": "string",
+                                                        "example": "✅"
+                                                    },
+                                                    "severityLabel": {
+                                                        "type": "string",
+                                                        "example": "Success"
+                                                    },
+                                                    "admin": {
+                                                        "$ref": "#/components/schemas/AdminResource"
+                                                    },
+                                                    "createdAt": {
+                                                        "type": "string",
+                                                        "example": "2025-01-15 10:30:00"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "pageSize": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "totalPages": {
+                                                    "type": "integer",
+                                                    "example": 7
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/401"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/Admin/Logs/Activities/View/{id}": {
+            "post": {
+                "tags": [
+                    "Activity Logs"
+                ],
+                "summary": "View single activity log",
+                "description": "Retrieve detailed information about a specific activity log",
+                "operationId": "6a64199af5dd67094de6208449b9aa09",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Activity Log ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "statusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "event": {
+                                                    "type": "string",
+                                                    "example": "login"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "User logged in"
+                                                },
+                                                "severity": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "info",
+                                                        "warning",
+                                                        "error",
+                                                        "success"
+                                                    ],
+                                                    "example": "success"
+                                                },
+                                                "severityColor": {
+                                                    "type": "string",
+                                                    "example": "#10B981"
+                                                },
+                                                "severityIcon": {
+                                                    "type": "string",
+                                                    "example": "✅"
+                                                },
+                                                "severityLabel": {
+                                                    "type": "string",
+                                                    "example": "Success"
+                                                },
+                                                "admin": {
+                                                    "$ref": "#/components/schemas/AdminResource"
+                                                },
+                                                "properties": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "old": {
+                                                            "name": "John"
+                                                        },
+                                                        "new": {
+                                                            "name": "Jane"
+                                                        }
+                                                    }
+                                                },
+                                                "createdAt": {
+                                                    "type": "string",
+                                                    "example": "2025-01-15 10:30:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/404"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/Admin/Logs/Activities/Dashboard": {
+            "post": {
+                "tags": [
+                    "Activity Logs"
+                ],
+                "summary": "Get activity dashboard statistics",
+                "description": "Retrieve activity statistics for dashboard including recent activities, summary, top events, and most active users",
+                "operationId": "8a3869ab4f6f1b9627b2a480ec411675",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "statusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "recent_activities": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "activity_summary": {
+                                                    "properties": {
+                                                        "today": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "this_week": {
+                                                            "type": "integer",
+                                                            "example": 120
+                                                        },
+                                                        "this_month": {
+                                                            "type": "integer",
+                                                            "example": 450
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "top_events": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "most_active_users": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/401"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/purchase-orders/{po}/cancel": {
             "post": {
                 "tags": [
@@ -2829,14 +3307,14 @@
                 ]
             }
         },
-        "/stock/items/list": {
+        "/Stock/Items/LoadData": {
             "post": {
                 "tags": [
                     "Stock"
                 ],
                 "summary": "Get all stock items",
                 "description": "Returns a paginated list of all stock items.",
-                "operationId": "df9efba35387df7ffec366c4059efb7a",
+                "operationId": "ceae08e580995886007659ac6bd5e4f9",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2908,14 +3386,14 @@
                 ]
             }
         },
-        "/stock/items/create": {
+        "/Stock/Items/Create": {
             "post": {
                 "tags": [
                     "Stock"
                 ],
                 "summary": "Create a new stock item",
                 "description": "Create a new stock item with pricing and stock information",
-                "operationId": "321b44515d22106b610eb893b2a62430",
+                "operationId": "ddcafd42b7dbdd454380ff75768dcec9",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -2927,40 +3405,59 @@
                                     "category",
                                     "unit",
                                     "min_stock",
+                                    "max_stock",
                                     "buy_price",
-                                    "sell_price"
+                                    "sell_price",
+                                    "supplier_id"
                                 ],
                                 "properties": {
                                     "code": {
+                                        "description": "Unique item code/SKU",
                                         "type": "string",
                                         "example": "STK-001"
                                     },
                                     "name": {
+                                        "description": "Item name",
                                         "type": "string",
                                         "example": "Beras Premium 25kg"
                                     },
                                     "category": {
+                                        "description": "Item category",
                                         "type": "string",
                                         "example": "Beras"
                                     },
                                     "unit": {
+                                        "description": "Unit of measurement (kg, liter, pcs, etc)",
                                         "type": "string",
                                         "example": "karung"
                                     },
                                     "min_stock": {
-                                        "description": "Minimum stock level for alerts",
+                                        "description": "Minimum stock level for low stock alerts",
                                         "type": "integer",
                                         "example": 50
                                     },
+                                    "max_stock": {
+                                        "description": "Maximum stock level for overstock alerts",
+                                        "type": "integer",
+                                        "example": 500
+                                    },
                                     "buy_price": {
+                                        "description": "Last purchase price per unit",
                                         "type": "number",
                                         "format": "float",
                                         "example": 150000
                                     },
                                     "sell_price": {
+                                        "description": "Selling price per unit",
                                         "type": "number",
                                         "format": "float",
                                         "example": 165000
+                                    },
+                                    "supplier_id": {
+                                        "description": "Supplier UUID - ID supplier yang terdaftar",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "550e8400-e29b-41d4-a716-446655440000"
                                     }
                                 },
                                 "type": "object"
@@ -2999,14 +3496,14 @@
                 ]
             }
         },
-        "/stock/items/detail/{id}": {
+        "/Stock/Items/View/{id}": {
             "post": {
                 "tags": [
                     "Stock"
                 ],
                 "summary": "Get stock item detail",
                 "description": "Get detailed information about a specific stock item",
-                "operationId": "5b66e570a14caf99c726c1abd6ed78e4",
+                "operationId": "b7ecf421e8cdd558973fddc3480cf488",
                 "parameters": [
                     {
                         "name": "id",
@@ -3050,14 +3547,14 @@
                 ]
             }
         },
-        "/stock/items/update/{id}": {
+        "/Stock/Items/Update/{id}": {
             "post": {
                 "tags": [
                     "Stock"
                 ],
                 "summary": "Update stock item",
                 "description": "Update an existing stock item's information",
-                "operationId": "15ea8d1dba8964401e2367dbf11dced4",
+                "operationId": "a7e05b80f367954aac5390181782bbbf",
                 "parameters": [
                     {
                         "name": "id",
@@ -3077,34 +3574,52 @@
                             "schema": {
                                 "properties": {
                                     "code": {
+                                        "description": "Unique item code/SKU",
                                         "type": "string",
                                         "example": "STK-001"
                                     },
                                     "name": {
+                                        "description": "Item name",
                                         "type": "string",
                                         "example": "Beras Premium 25kg"
                                     },
                                     "category": {
+                                        "description": "Item category",
                                         "type": "string",
                                         "example": "Beras"
                                     },
                                     "unit": {
+                                        "description": "Unit of measurement",
                                         "type": "string",
                                         "example": "karung"
                                     },
                                     "min_stock": {
+                                        "description": "Minimum stock level",
                                         "type": "integer",
                                         "example": 50
                                     },
+                                    "max_stock": {
+                                        "description": "Maximum stock level",
+                                        "type": "integer",
+                                        "example": 500
+                                    },
                                     "buy_price": {
+                                        "description": "Last purchase price",
                                         "type": "number",
                                         "format": "float",
                                         "example": 150000
                                     },
                                     "sell_price": {
+                                        "description": "Selling price",
                                         "type": "number",
                                         "format": "float",
                                         "example": 165000
+                                    },
+                                    "supplier_id": {
+                                        "description": "ID supplier yang terdaftar",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "550e8400-e29b-41d4-a716-446655440000"
                                     }
                                 },
                                 "type": "object"
@@ -3143,14 +3658,14 @@
                 ]
             }
         },
-        "/stock/items/delete/{id}": {
+        "/Stock/Items/Delete/{id}": {
             "post": {
                 "tags": [
                     "Stock"
                 ],
                 "summary": "Delete stock item",
                 "description": "Delete a stock item",
-                "operationId": "14a69e272be03584d95c93a105f2d6be",
+                "operationId": "9ee5cdd82c66b43fa238b8b048fae885",
                 "parameters": [
                     {
                         "name": "id",
@@ -3772,18 +4287,25 @@
                 "title": "User Create Request",
                 "description": "Request schema for creating a new user (admin or regular user)",
                 "required": [
-                    "namaLengkap",
+                    "firstName",
+                    "lastName",
                     "username",
                     "email",
                     "password",
                     "role"
                 ],
                 "properties": {
-                    "namaLengkap": {
-                        "description": "Full name",
+                    "firstName": {
+                        "description": "First name",
                         "type": "string",
                         "maxLength": 255,
-                        "example": "John Doe"
+                        "example": "John"
+                    },
+                    "lastName": {
+                        "description": "Last name",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Doe"
                     },
                     "username": {
                         "description": "Username",
@@ -3947,17 +4469,24 @@
                 "title": "User Update Request",
                 "description": "Request schema for updating a user (admin or regular user)",
                 "required": [
-                    "namaLengkap",
+                    "firstName",
+                    "lastName",
                     "username",
                     "email",
                     "role"
                 ],
                 "properties": {
-                    "namaLengkap": {
-                        "description": "Full name",
+                    "firstName": {
+                        "description": "First name",
                         "type": "string",
                         "maxLength": 255,
-                        "example": "John Doe"
+                        "example": "John"
+                    },
+                    "lastName": {
+                        "description": "Last name",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Doe"
                     },
                     "username": {
                         "description": "Username",
@@ -4172,6 +4701,100 @@
                 },
                 "type": "object"
             },
+            "ActivityLogResource": {
+                "title": "Activity Log Resource",
+                "description": "Activity log resource representation",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "User logged in successfully"
+                    },
+                    "event": {
+                        "type": "string",
+                        "example": "login"
+                    },
+                    "severity": {
+                        "type": "string",
+                        "enum": [
+                            "info",
+                            "warning",
+                            "error",
+                            "success"
+                        ],
+                        "example": "success"
+                    },
+                    "severityColor": {
+                        "type": "string",
+                        "example": "#10B981"
+                    },
+                    "severityIcon": {
+                        "type": "string",
+                        "example": "✅"
+                    },
+                    "severityLabel": {
+                        "type": "string",
+                        "example": "Success"
+                    },
+                    "causer": {
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "firstName": {
+                                "type": "string",
+                                "example": "John"
+                            },
+                            "lastName": {
+                                "type": "string",
+                                "example": "Doe"
+                            },
+                            "fullName": {
+                                "type": "string",
+                                "example": "John Doe"
+                            },
+                            "email": {
+                                "type": "string",
+                                "example": "john@example.com"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "subject": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "properties": {
+                        "type": "object",
+                        "example": {
+                            "ip_address": "127.0.0.1",
+                            "user_agent": "Mozilla"
+                        }
+                    },
+                    "changes": {
+                        "type": "object",
+                        "example": {
+                            "old": {
+                                "name": "John"
+                            },
+                            "new": {
+                                "name": "Jane"
+                            }
+                        },
+                        "nullable": true
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "example": "2025-01-15 10:30:00"
+                    }
+                },
+                "type": "object"
+            },
             "AdminActivityLogResource": {
                 "required": [
                     "id",
@@ -4218,13 +4841,21 @@
                 "title": "Create Stock Item Request",
                 "description": "Schema for creating a new stock item",
                 "required": [
-                    "name"
+                    "code",
+                    "name",
+                    "supplier_id"
                 ],
                 "properties": {
+                    "code": {
+                        "description": "Unique item code/SKU",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "STK-001"
+                    },
                     "name": {
                         "type": "string",
                         "maxLength": 255,
-                        "example": "Beras Premium"
+                        "example": "Beras Premium 25kg"
                     },
                     "category": {
                         "type": "string",
@@ -4234,21 +4865,33 @@
                     "unit": {
                         "type": "string",
                         "maxLength": 50,
-                        "example": "kg"
+                        "example": "karung"
                     },
                     "min_stock": {
+                        "description": "Minimum stock level for alerts",
                         "type": "integer",
-                        "example": 100
+                        "example": 50
+                    },
+                    "max_stock": {
+                        "description": "Maximum stock level for overstock alerts",
+                        "type": "integer",
+                        "example": 500
                     },
                     "buy_price": {
                         "type": "number",
                         "format": "decimal",
-                        "example": 12000
+                        "example": 150000
                     },
                     "sell_price": {
                         "type": "number",
                         "format": "decimal",
-                        "example": 15000
+                        "example": 165000
+                    },
+                    "supplier_id": {
+                        "description": "ID supplier yang terdaftar",
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
                     }
                 },
                 "type": "object"
@@ -4301,10 +4944,16 @@
                 "title": "Update Stock Item Request",
                 "description": "Schema for updating an existing stock item",
                 "properties": {
+                    "code": {
+                        "description": "Unique item code/SKU",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "STK-001"
+                    },
                     "name": {
                         "type": "string",
                         "maxLength": 255,
-                        "example": "Beras Premium 5kg"
+                        "example": "Beras Premium 25kg"
                     },
                     "category": {
                         "type": "string",
@@ -4317,18 +4966,30 @@
                         "example": "karung"
                     },
                     "min_stock": {
+                        "description": "Minimum stock level",
                         "type": "integer",
                         "example": 50
+                    },
+                    "max_stock": {
+                        "description": "Maximum stock level",
+                        "type": "integer",
+                        "example": 500
                     },
                     "buy_price": {
                         "type": "number",
                         "format": "decimal",
-                        "example": 13000
+                        "example": 150000
                     },
                     "sell_price": {
                         "type": "number",
                         "format": "decimal",
-                        "example": 16000
+                        "example": 165000
+                    },
+                    "supplier_id": {
+                        "description": "ID supplier yang terdaftar",
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
                     }
                 },
                 "type": "object"
@@ -4672,6 +5333,16 @@
                         "example": "SUP-001",
                         "nullable": true
                     },
+                    "namaPerusahaan": {
+                        "type": "string",
+                        "example": "PT. Supplier Jaya",
+                        "nullable": true
+                    },
+                    "district": {
+                        "type": "string",
+                        "example": "Jakarta Selatan",
+                        "nullable": true
+                    },
                     "dapurId": {
                         "type": "string",
                         "format": "uuid",
@@ -4681,6 +5352,11 @@
                     "dapurCode": {
                         "type": "string",
                         "example": "DAP-001",
+                        "nullable": true
+                    },
+                    "namaDapur": {
+                        "type": "string",
+                        "example": "Dapur Pusat",
                         "nullable": true
                     }
                 },
@@ -4847,6 +5523,10 @@
         {
             "name": "Kitchen Orders",
             "description": "Kitchen Orders"
+        },
+        {
+            "name": "Activity Logs",
+            "description": "Activity Logs"
         },
         {
             "name": "Purchase Orders",

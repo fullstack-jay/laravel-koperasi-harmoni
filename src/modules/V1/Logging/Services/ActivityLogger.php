@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Str;
 use Modules\V1\Logging\Enums\LogEventEnum;
 use Modules\V1\Logging\Enums\LogNameEnum;
+use Modules\V1\Logging\Enums\SeverityEnum;
 use Modules\V1\Logging\Jobs\LogActivity;
 use Modules\V1\Logging\Model\ActivityLog;
 use Modules\V1\User\Models\User;
@@ -28,6 +29,8 @@ final class ActivityLogger
     private ?string $batchUuid = null;
 
     private ?string $event = null;
+
+    private ?string $severity = null;
 
     private array $oldValues = [];
 
@@ -69,6 +72,17 @@ final class ActivityLogger
     public function event(LogEventEnum $event): self
     {
         $this->event = $event->value;
+
+        return $this;
+    }
+
+    /**
+     * Set severity level manually (override auto-detection).
+     * If not set, severity will be auto-detected from event name.
+     */
+    public function severity(SeverityEnum $severity): self
+    {
+        $this->severity = $severity->value;
 
         return $this;
     }
@@ -142,9 +156,18 @@ final class ActivityLogger
 
     /**
      * Log the activity to database and file.
+     *
+     * @param string $description Activity description
+     * @param bool $async Whether to log asynchronously
+     * @param string|null $customEvent Custom event name (overrides the event set by event() method)
      */
-    public function log(string $description, bool $async = true): ActivityLog
+    public function log(string $description, bool $async = false, ?string $customEvent = null): ActivityLog
     {
+        // Override event if custom event provided
+        if ($customEvent !== null) {
+            $this->event = $customEvent;
+        }
+
         // Prepare activity data
         $activityData = $this->prepareActivityData($description);
 
@@ -175,14 +198,20 @@ final class ActivityLogger
             $this->properties['new'] = $this->newValues;
         }
 
+        // Auto-detect severity if not manually set
+        $severity = $this->severity;
+        if (empty($severity) && !empty($this->event)) {
+            $severity = SeverityEnum::fromEvent($this->event)->value;
+        }
+
         return [
             'log_name' => $this->logName,
             'description' => $description,
             'subject_type' => $this->subject?->getMorphClass(),
             'subject_id' => $this->subject?->getKey(),
             'event' => $this->event,
+            'severity' => $severity,
             'user_id' => $this->getCauser()?->getKey(),
-            'school_id' => request()->schoolId(),
             'properties' => $this->properties ?: null,
             'old_values' => $this->oldValues ?: null,
             'new_values' => $this->newValues ?: null,
@@ -197,7 +226,7 @@ final class ActivityLogger
     /**
      * Quick methods for common activities.
      */
-    public function created(Model $model, ?string $description = null, bool $async = true): ActivityLog
+    public function created(Model $model, ?string $description = null, bool $async = false): ActivityLog
     {
         return $this->performedOn($model)
             ->event(LogEventEnum::CREATE)
@@ -205,7 +234,7 @@ final class ActivityLogger
             ->log($description ?? ucfirst(class_basename($model)) . ' created', $async);
     }
 
-    public function updated(Model $model, ?string $description = null, bool $async = true): ActivityLog
+    public function updated(Model $model, ?string $description = null, bool $async = false): ActivityLog
     {
         return $this->performedOn($model)
             ->event(LogEventEnum::UPDATE)
@@ -213,7 +242,7 @@ final class ActivityLogger
             ->log($description ?? ucfirst(class_basename($model)) . ' updated', $async);
     }
 
-    public function deleted(Model $model, ?string $description = null, bool $async = true): ActivityLog
+    public function deleted(Model $model, ?string $description = null, bool $async = false): ActivityLog
     {
         return $this->performedOn($model)
             ->event(LogEventEnum::DELETE)
@@ -221,7 +250,7 @@ final class ActivityLogger
             ->log($description ?? ucfirst(class_basename($model)) . ' deleted', $async);
     }
 
-    public function restored(Model $model, ?string $description = null, bool $async = true): ActivityLog
+    public function restored(Model $model, ?string $description = null, bool $async = false): ActivityLog
     {
         return $this->performedOn($model)
             ->event(LogEventEnum::RESTORE)

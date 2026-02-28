@@ -14,9 +14,10 @@ use Modules\V1\Admin\Models\Admin;
  *     title="User Update Request",
  *     description="Request schema for updating a user (admin or regular user)",
  *     type="object",
- *     required={"namaLengkap", "username", "email", "role"},
+ *     required={"firstName", "username", "email", "role"},
  *
- *     @OA\Property(property="namaLengkap", type="string", maxLength=255, example="John Doe", description="Full name"),
+ *     @OA\Property(property="firstName", type="string", maxLength=255, example="John", description="First name"),
+ *     @OA\Property(property="lastName", type="string", maxLength=255, example="Doe", description="Last name (optional)"),
  *     @OA\Property(property="username", type="string", maxLength=255, example="johndoe", description="Username"),
  *     @OA\Property(property="email", type="string", format="email", example="john@example.com", description="Email address"),
  *     @OA\Property(property="password", type="string", minLength=8, example="password123", description="Password (optional for update)"),
@@ -74,7 +75,8 @@ final class AdminUpdateRequest extends FormRequest
         $id = $this->route('id');
 
         return [
-            'namaLengkap' => ['required', 'string', 'max:255'],
+            'firstName' => ['required', 'string', 'max:255'],
+            'lastName' => ['nullable', 'string', 'max:255'],
             'username' => [
                 'required',
                 'string',
@@ -149,7 +151,7 @@ final class AdminUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'namaLengkap.required' => 'Full name is required',
+            'firstName.required' => 'First name is required',
             'username.required' => 'Username is required',
             'username.unique' => 'Username already exists',
             'email.required' => 'Email is required',
@@ -173,6 +175,13 @@ final class AdminUpdateRequest extends FormRequest
             // If role is PEMASOK or ADMIN_PEMASOK and supplier data is provided
             if (in_array($role, ['PEMASOK', 'ADMIN_PEMASOK'])) {
                 $name = $this->input('supplier_data.name') ?? $this->input('supplierNama');
+
+                // Get sequence data
+                $category = $this->input('supplier_data.supplier_category') ?? $this->input('supplierKategori');
+                $companyCode = $this->input('supplier_data.supplier_company_code') ?? $this->input('supplierKodePerusahaan');
+                $location = $this->input('supplier_data.supplier_location') ?? $this->input('supplierLokasi');
+                $year = $this->input('supplier_data.supplier_year') ?? $this->input('supplierTahun');
+                $sequence = $this->input('supplier_data.supplier_sequence') ?? $this->input('supplierUrut');
 
                 // Check if supplier name is being updated
                 if (!empty($name)) {
@@ -202,12 +211,105 @@ final class AdminUpdateRequest extends FormRequest
                         }
                     }
                 }
+
+                // Validate sequence number if provided
+                if (!empty($sequence) && !empty($category) && !empty($location) && !empty($year)) {
+                    // Validate sequence format (exactly 3 digits)
+                    if (!preg_match('/^\d{3}$/', $sequence)) {
+                        $validator->errors()->add('supplierUrut', 'Sequence must be 3 digits (e.g., 001, 002, 003).');
+                    } else {
+                        // Get current user's supplier to check if sequence is changing
+                        $user = \Modules\V1\Admin\Models\Admin::find($userId);
+                        if (!$user) {
+                            $user = \Modules\V1\User\Models\User::find($userId);
+                        }
+
+                        $currentSupplier = null;
+                        $currentSequence = null;
+                        $isSequenceChanging = false;
+
+                        if ($user && $user->supplier_id) {
+                            $currentSupplier = \Modules\V1\Supplier\Models\Supplier::find($user->supplier_id);
+                            if ($currentSupplier) {
+                                // Extract current sequence from supplier code
+                                $parts = explode('-', $currentSupplier->code);
+                                $currentSequence = $parts[5] ?? null;
+                                $isSequenceChanging = ($currentSequence !== $sequence);
+                            }
+                        }
+
+                        // Build the full supplier code
+                        $expectedCode = 'SUP-' . $category . '-' . $companyCode . '-' . $location . '-' . $year . '-' . $sequence;
+
+                        // Check for duplicate sequence - GLOBAL sequence for category + location + year
+                        $prefix = 'SUP-' . $category . '%-' . $location . '-' . $year . '-' . $sequence;
+                        $query = \Modules\V1\Supplier\Models\Supplier::withTrashed()
+                            ->where('code', 'like', $prefix);
+
+                        // Exclude current supplier from duplicate check
+                        if ($user && $user->supplier_id) {
+                            $query->where('id', '!=', $user->supplier_id);
+                        }
+
+                        $existingSupplier = $query->first();
+
+                        if ($existingSupplier) {
+                            $validator->errors()->add('supplierUrut', "Sequence {$sequence} is already used for category {$category} in location {$location} year {$year}.");
+                        } else {
+                            // Validate sequence is in order - GLOBAL for category + location + year
+                            // Skip validation if sequence is not changing
+                            if (!$currentSupplier || $isSequenceChanging) {
+                                $prefix = 'SUP-' . $category . '-%' . '-' . $location . '-' . $year . '-';
+
+                                $existingCodes = \Modules\V1\Supplier\Models\Supplier::withTrashed()
+                                    ->where('code', 'like', $prefix . '%')
+                                    ->pluck('code')
+                                    ->map(function ($code) {
+                                        // Extract sequence from code: SUP-RAW-XXX-KRW-26-001
+                                        $parts = explode('-', $code);
+                                        return (int) ($parts[5] ?? 0);
+                                    })
+                                    ->sort()
+                                    ->values()
+                                    ->toArray();
+
+                                $sequenceInt = (int) $sequence;
+
+                                if (empty($existingCodes)) {
+                                    // First supplier should be 001
+                                    if ($sequenceInt !== 1) {
+                                        $validator->errors()->add('supplierUrut', 'First sequence must be 001.');
+                                    }
+                                } else {
+                                    // Check if sequence is already used
+                                    if (in_array($sequenceInt, $existingCodes)) {
+                                        $validator->errors()->add('supplierUrut', "Sequence {$sequence} is already used.");
+                                    } else {
+                                        // Find next expected sequence
+                                        $maxSequence = max($existingCodes);
+                                        $expectedSequence = $maxSequence + 1;
+
+                                        if ($sequenceInt !== $expectedSequence) {
+                                            $validator->errors()->add('supplierUrut', "Sequence must be " . str_pad((string)$expectedSequence, 3, '0', STR_PAD_LEFT) . " (next available).");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // Validate DAPUR role dapur data
             if ($role === 'DAPUR') {
                 $dapurName = $this->input('dapur_data.name') ?? $this->input('dapurNama');
                 $dapurId = $this->input('dapur_id');
+
+                // Get dapur sequence data
+                $fullDapurCode = $this->input('dapur_data.dapur_code') ?? $this->input('dapurKode');
+                $dapurZona = $this->input('dapur_data.dapur_zona') ?? $this->input('dapurZona');
+                $dapurTahun = $this->input('dapur_data.dapur_year') ?? $this->input('dapurTahun');
+                $dapurUrut = $this->input('dapur_data.dapur_sequence') ?? $this->input('dapurUrut');
 
                 // Only validate dapur name if dapur_id is not being used
                 if (empty($dapurId)) {
@@ -235,6 +337,93 @@ final class AdminUpdateRequest extends FormRequest
                             $existingDapur = \Modules\V1\Kitchen\Models\Dapur::where('name', $dapurName)->first();
                             if ($existingDapur) {
                                 $validator->errors()->add('dapurNama', 'Dapur name already exists. Please use a different name.');
+                            }
+                        }
+                    }
+
+                    // Validate dapur sequence number if provided
+                    if (!empty($dapurUrut) && !empty($dapurZona) && !empty($dapurTahun)) {
+                        // Validate sequence format (3 digits)
+                        if (!preg_match('/^\d{3}$/', $dapurUrut)) {
+                            $validator->errors()->add('dapurUrut', 'Sequence must be 3 digits (e.g., 001, 002, 003).');
+                        } else {
+                            // Get current user's dapur to check if sequence is changing
+                            $user = \Modules\V1\Admin\Models\Admin::find($userId);
+                            if (!$user) {
+                                $user = \Modules\V1\User\Models\User::find($userId);
+                            }
+
+                            $currentDapur = null;
+                            $currentSequence = null;
+                            $isSequenceChanging = false;
+
+                            if ($user && $user->dapur_id) {
+                                $currentDapur = \Modules\V1\Kitchen\Models\Dapur::find($user->dapur_id);
+                                if ($currentDapur) {
+                                    // Extract current sequence from dapur code
+                                    $parts = explode('-', $currentDapur->code);
+                                    $currentSequence = $parts[4] ?? null;
+                                    $isSequenceChanging = ($currentSequence !== $dapurUrut);
+                                }
+                            }
+
+                            // Build the full dapur code
+                            $expectedCode = 'DPR-' . $fullDapurCode . '-' . $dapurZona . '-' . $dapurTahun . '-' . $dapurUrut;
+
+                            // Check for duplicate sequence - GLOBAL sequence for zona + tahun
+                            $prefix = 'DPR-%-' . $dapurZona . '-' . $dapurTahun . '-' . $dapurUrut;
+                            $query = \Modules\V1\Kitchen\Models\Dapur::withTrashed()
+                                ->where('code', 'like', $prefix);
+
+                            // Exclude current dapur from duplicate check
+                            if ($user && $user->dapur_id) {
+                                $query->where('id', '!=', $user->dapur_id);
+                            }
+
+                            $existingDapur = $query->first();
+
+                            if ($existingDapur) {
+                                $validator->errors()->add('dapurUrut', "Sequence {$dapurUrut} is already used for zona {$dapurZona} year {$dapurTahun}.");
+                            } else {
+                                // Validate sequence is in order - GLOBAL for zona + tahun
+                                // Skip validation if sequence is not changing
+                                if (!$currentDapur || $isSequenceChanging) {
+                                    $prefix = 'DPR-%-' . $dapurZona . '-' . $dapurTahun . '-';
+
+                                    $existingCodes = \Modules\V1\Kitchen\Models\Dapur::withTrashed()
+                                        ->where('code', 'like', $prefix . '%')
+                                        ->pluck('code')
+                                        ->map(function ($code) {
+                                            // Extract sequence from code: DPR-XXX-Z01-26-001
+                                            $parts = explode('-', $code);
+                                            return (int) ($parts[4] ?? 0);
+                                        })
+                                        ->sort()
+                                        ->values()
+                                        ->toArray();
+
+                                    $dapurUrutInt = (int) $dapurUrut;
+
+                                    if (empty($existingCodes)) {
+                                        // First dapur should be 001
+                                        if ($dapurUrutInt !== 1) {
+                                            $validator->errors()->add('dapurUrut', 'First sequence must be 001.');
+                                        }
+                                    } else {
+                                        // Check if sequence is already used
+                                        if (in_array($dapurUrutInt, $existingCodes)) {
+                                            $validator->errors()->add('dapurUrut', "Sequence {$dapurUrut} is already used.");
+                                        } else {
+                                            // Find next expected sequence
+                                            $maxSequence = max($existingCodes);
+                                            $expectedSequence = $maxSequence + 1;
+
+                                            if ($dapurUrutInt !== $expectedSequence) {
+                                                $validator->errors()->add('dapurUrut', "Sequence must be " . str_pad((string)$expectedSequence, 3, '0', STR_PAD_LEFT) . " (next available).");
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

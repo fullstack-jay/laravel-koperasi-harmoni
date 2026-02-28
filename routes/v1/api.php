@@ -39,7 +39,7 @@ Route::middleware(['auth:sanctum'])->prefix('suppliers')->as('suppliers:')->grou
 /**
  * Stock Routes
  */
-Route::middleware(['auth:sanctum'])->prefix('stock')->as('stock:')->group(
+Route::middleware(['auth:sanctum'])->prefix('Stock')->as('stock:')->group(
     base_path('routes/v1/stock.php'),
 );
 

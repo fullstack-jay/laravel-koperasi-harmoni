@@ -14,9 +14,10 @@ use Modules\V1\Admin\Models\Admin;
  *     title="User Create Request",
  *     description="Request schema for creating a new user (admin or regular user)",
  *     type="object",
- *     required={"namaLengkap", "username", "email", "password", "role"},
+ *     required={"firstName", "username", "email", "password", "role"},
  *
- *     @OA\Property(property="namaLengkap", type="string", maxLength=255, example="John Doe", description="Full name"),
+ *     @OA\Property(property="firstName", type="string", maxLength=255, example="John", description="First name"),
+ *     @OA\Property(property="lastName", type="string", maxLength=255, example="Doe", description="Last name (optional)"),
  *     @OA\Property(property="username", type="string", maxLength=255, example="johndoe", description="Username"),
  *     @OA\Property(property="email", type="string", format="email", example="john@example.com", description="Email address"),
  *     @OA\Property(property="password", type="string", minLength=8, example="password123", description="Password"),
@@ -80,7 +81,8 @@ final class AdminCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'namaLengkap' => ['required', 'string', 'max:255'],
+            'firstName' => ['required', 'string', 'max:255'],
+            'lastName' => ['nullable', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:system_users,username', 'unique:users,username'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:system_users,email', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
@@ -142,7 +144,7 @@ final class AdminCreateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'namaLengkap.required' => 'Full name is required',
+            'firstName.required' => 'First name is required',
             'username.required' => 'Username is required',
             'username.unique' => 'Username already exists',
             'email.required' => 'Email is required',
@@ -208,6 +210,65 @@ final class AdminCreateRequest extends FormRequest
                 if (!empty($supplierEmail) && !filter_var($supplierEmail, FILTER_VALIDATE_EMAIL)) {
                     $validator->errors()->add('supplierEmail', 'Supplier email must be a valid email address.');
                 }
+
+                // Validate sequence number
+                if (!empty($sequence) && !empty($category) && !empty($location) && !empty($year)) {
+                    // Validate sequence format (exactly 3 digits)
+                    if (!preg_match('/^\d{3}$/', $sequence)) {
+                        $validator->errors()->add('supplierUrut', 'Sequence must be 3 digits (e.g., 001, 002, 003).');
+                    } else {
+                        // Build the full supplier code
+                        $expectedCode = 'SUP-' . $category . '-' . $companyCode . '-' . $location . '-' . $year . '-' . $sequence;
+
+                        // Check for duplicate sequence - GLOBAL sequence for category + location + year
+                        $prefix = 'SUP-' . $category . '%-' . $location . '-' . $year . '-' . $sequence;
+
+                        $existingSupplier = \Modules\V1\Supplier\Models\Supplier::withTrashed()
+                            ->where('code', 'like', $prefix)
+                            ->first();
+
+                        if ($existingSupplier) {
+                            $validator->errors()->add('supplierUrut', "Sequence {$sequence} is already used for category {$category} in location {$location} year {$year}.");
+                        } else {
+                            // Validate sequence is in order - GLOBAL for category + location + year
+                            $prefix = 'SUP-' . $category . '-%' . '-' . $location . '-' . $year . '-';
+
+                            $existingCodes = \Modules\V1\Supplier\Models\Supplier::withTrashed()
+                                ->where('code', 'like', $prefix . '%')
+                                ->pluck('code')
+                                ->map(function ($code) {
+                                    // Extract sequence from code: SUP-RAW-XXX-KRW-26-001
+                                    $parts = explode('-', $code);
+                                    return (int) ($parts[5] ?? 0);
+                                })
+                                ->sort()
+                                ->values()
+                                ->toArray();
+
+                            $sequenceInt = (int) $sequence;
+
+                            if (empty($existingCodes)) {
+                                // First supplier should be 001
+                                if ($sequenceInt !== 1) {
+                                    $validator->errors()->add('supplierUrut', 'First sequence must be 001.');
+                                }
+                            } else {
+                                // Check if sequence is already used
+                                if (in_array($sequenceInt, $existingCodes)) {
+                                    $validator->errors()->add('supplierUrut', "Sequence {$sequence} is already used.");
+                                } else {
+                                    // Find next expected sequence
+                                    $maxSequence = max($existingCodes);
+                                    $expectedSequence = $maxSequence + 1;
+
+                                    if ($sequenceInt !== $expectedSequence) {
+                                        $validator->errors()->add('supplierUrut', "Sequence must be " . str_pad((string)$expectedSequence, 3, '0', STR_PAD_LEFT) . " (next available).");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // Validate DAPUR role dapur data
@@ -241,6 +302,65 @@ final class AdminCreateRequest extends FormRequest
                     $existingDapur = \Modules\V1\Kitchen\Models\Dapur::where('name', $dapurName)->first();
                     if ($existingDapur) {
                         $validator->errors()->add('dapurNama', 'Dapur name already exists. Please use a different name.');
+                    }
+                }
+
+                // Validate dapur sequence number if all components are provided
+                if (!empty($dapurUrut) && !empty($dapurZona) && !empty($dapurTahun)) {
+                    // Validate sequence format (3 digits)
+                    if (!preg_match('/^\d{3}$/', $dapurUrut)) {
+                        $validator->errors()->add('dapurUrut', 'Sequence must be 3 digits (e.g., 001, 002, 003).');
+                    } else {
+                        // Build the full dapur code
+                        $expectedCode = 'DPR-' . $dapurCode . '-' . $dapurZona . '-' . $dapurTahun . '-' . $dapurUrut;
+
+                        // Check for duplicate sequence - GLOBAL sequence for zona + tahun
+                        $prefix = 'DPR-%-' . $dapurZona . '-' . $dapurTahun . '-' . $dapurUrut;
+
+                        $existingDapur = \Modules\V1\Kitchen\Models\Dapur::withTrashed()
+                            ->where('code', 'like', $prefix)
+                            ->first();
+
+                        if ($existingDapur) {
+                            $validator->errors()->add('dapurUrut', "Sequence {$dapurUrut} is already used for zona {$dapurZona} year {$dapurTahun}.");
+                        } else {
+                            // Validate sequence is in order - GLOBAL for zona + tahun
+                            $prefix = 'DPR-%-' . $dapurZona . '-' . $dapurTahun . '-';
+
+                            $existingCodes = \Modules\V1\Kitchen\Models\Dapur::withTrashed()
+                                ->where('code', 'like', $prefix . '%')
+                                ->pluck('code')
+                                ->map(function ($code) {
+                                    // Extract sequence from code: DPR-XXX-Z01-26-001
+                                    $parts = explode('-', $code);
+                                    return (int) ($parts[4] ?? 0);
+                                })
+                                ->sort()
+                                ->values()
+                                ->toArray();
+
+                            $dapurUrutInt = (int) $dapurUrut;
+
+                            if (empty($existingCodes)) {
+                                // First dapur should be 001
+                                if ($dapurUrutInt !== 1) {
+                                    $validator->errors()->add('dapurUrut', 'First sequence must be 001.');
+                                }
+                            } else {
+                                // Check if sequence is already used
+                                if (in_array($dapurUrutInt, $existingCodes)) {
+                                    $validator->errors()->add('dapurUrut', "Sequence {$dapurUrut} is already used.");
+                                } else {
+                                    // Find next expected sequence
+                                    $maxSequence = max($existingCodes);
+                                    $expectedSequence = $maxSequence + 1;
+
+                                    if ($dapurUrutInt !== $expectedSequence) {
+                                        $validator->errors()->add('dapurUrut', "Sequence must be " . str_pad((string)$expectedSequence, 3, '0', STR_PAD_LEFT) . " (next available).");
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
