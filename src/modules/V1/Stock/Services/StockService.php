@@ -7,7 +7,6 @@ namespace Modules\V1\Stock\Services;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Modules\V1\Stock\Models\StockItem;
-use Shared\Helpers\DocumentHelper;
 
 class StockService
 {
@@ -21,19 +20,21 @@ class StockService
      */
     public function createItem(array $data): StockItem
     {
-        // Generate stock item code
-        $lastItem = StockItem::withTrashed()->orderBy('code', 'desc')->first();
-        $sequence = $lastItem ? (int) str_replace('STK-', '', $lastItem->code) + 1 : 1;
-        $code = DocumentHelper::generateStockItemCode($sequence);
+        // Extract category from code (first part before hyphen)
+        // Example: BPO-BRS-PRM-25KG → BPO
+        $parts = explode('-', $data['code']);
+        $category = $data['category'] ?? $parts[0] ?? null;
 
         return StockItem::create([
-            'code' => $code,
+            'code' => $data['code'],
             'name' => $data['name'],
-            'category' => $data['category'] ?? null,
+            'category' => $category,
             'unit' => $data['unit'] ?? null,
             'min_stock' => $data['min_stock'] ?? 10,
+            'max_stock' => $data['max_stock'] ?? 100,
             'buy_price' => $data['buy_price'] ?? 0,
             'sell_price' => $data['sell_price'] ?? 0,
+            'supplier_id' => $data['supplier_id'] ?? null,
             'current_stock' => 0,
         ]);
     }
@@ -45,14 +46,30 @@ class StockService
     {
         $item = $this->findItem($id);
 
-        $item->update([
+        // Extract category from code if code is being updated
+        $category = $data['category'] ?? $item->category;
+        if (isset($data['code'])) {
+            $parts = explode('-', $data['code']);
+            $category = $parts[0] ?? $category;
+        }
+
+        $updateData = [
             'name' => $data['name'] ?? $item->name,
-            'category' => $data['category'] ?? $item->category,
+            'category' => $category,
             'unit' => $data['unit'] ?? $item->unit,
             'min_stock' => $data['min_stock'] ?? $item->min_stock,
+            'max_stock' => $data['max_stock'] ?? $item->max_stock,
             'buy_price' => $data['buy_price'] ?? $item->buy_price,
             'sell_price' => $data['sell_price'] ?? $item->sell_price,
-        ]);
+            'supplier_id' => $data['supplier_id'] ?? $item->supplier_id,
+        ];
+
+        // Include code in update if provided
+        if (isset($data['code'])) {
+            $updateData['code'] = $data['code'];
+        }
+
+        $item->update($updateData);
 
         return $item->fresh();
     }
@@ -65,9 +82,15 @@ class StockService
         int $pageSize = 15,
         string $sortColumn = 'created_at',
         string $sortDir = 'desc',
-        string $search = ''
+        string $search = '',
+        ?string $supplierId = null
     ): Collection {
         $query = StockItem::query();
+
+        // Filter by supplier
+        if (!empty($supplierId)) {
+            $query->where('supplier_id', $supplierId);
+        }
 
         // Apply global search
         if (!empty($search)) {

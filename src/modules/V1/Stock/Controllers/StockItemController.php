@@ -37,7 +37,8 @@ final class StockItemController
      *                  @OA\Property(property="pageSize", type="integer", example=10, description="Items per page"),
      *                  @OA\Property(property="sortDir", type="string", enum={"ASC", "DESC"}, example="ASC", description="Sort direction"),
      *                  @OA\Property(property="sortDirColumn", type="string", example="id", description="Column to sort by"),
-     *                  @OA\Property(property="search", type="string", example="Beras", description="Global search string")
+     *                  @OA\Property(property="search", type="string", example="Beras", description="Global search string"),
+     *                  @OA\Property(property="supplierId", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000", description="Filter by supplier ID (optional)")
      *              )
      *          )
      *      ),
@@ -64,14 +65,16 @@ final class StockItemController
             $pageSize = $request->input('pageSize', 15);
             $sortDirColumn = $request->input('sortDirColumn', 'created_at');
             $sortDir = $request->input('sortDir', 'desc');
-            $search = $request->input('search', '');
+            $search = $request->input('search') ?? '';
+            $supplierId = $request->input('supplierId') ?? null;
 
             $items = $this->stockService->getAllItems(
                 pageNumber: $pageNumber,
                 pageSize: $pageSize,
                 sortColumn: $sortDirColumn,
                 sortDir: $sortDir,
-                search: $search
+                search: $search,
+                supplierId: $supplierId
             );
 
             return ResponseHelper::success(
@@ -99,17 +102,16 @@ final class StockItemController
      *             mediaType="application/json",
      *
      *             @OA\Schema(
-     *                 required={"code", "name", "category", "unit", "min_stock", "max_stock", "buy_price", "sell_price", "supplier_id"},
+     *                 required={"code", "name", "unit", "minStock", "maxStock", "buyPrice", "sellPrice", "supplierId"},
      *
-     *                 @OA\Property(property="code", type="string", example="STK-001", description="Unique item code/SKU"),
+     *                 @OA\Property(property="code", type="string", example="BPO-BRS-PRM-25KG", description="Item code format: CATEGORY-PROD-TYPE[-SIZE]. Product-type combination must be unique. Category (first part) will be auto-extracted and saved to category field"),
      *                 @OA\Property(property="name", type="string", example="Beras Premium 25kg", description="Item name"),
-     *                 @OA\Property(property="category", type="string", example="Beras", description="Item category"),
      *                 @OA\Property(property="unit", type="string", example="karung", description="Unit of measurement (kg, liter, pcs, etc)"),
-     *                 @OA\Property(property="min_stock", type="integer", example=50, description="Minimum stock level for low stock alerts"),
-     *                 @OA\Property(property="max_stock", type="integer", example=500, description="Maximum stock level for overstock alerts"),
-     *                 @OA\Property(property="buy_price", type="number", format="float", example=150000, description="Last purchase price per unit"),
-     *                 @OA\Property(property="sell_price", type="number", format="float", example=165000, description="Selling price per unit"),
-     *                 @OA\Property(property="supplier_id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000", description="Supplier UUID - ID supplier yang terdaftar")
+     *                 @OA\Property(property="minStock", type="integer", example=50, description="Minimum stock level for low stock alerts"),
+     *                 @OA\Property(property="maxStock", type="integer", example=500, description="Maximum stock level for overstock alerts"),
+     *                 @OA\Property(property="buyPrice", type="number", format="float", example=150000, description="Last purchase price per unit"),
+     *                 @OA\Property(property="sellPrice", type="number", format="float", example=165000, description="Selling price per unit"),
+     *                 @OA\Property(property="supplierId", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000", description="Supplier UUID - ID supplier yang terdaftar")
      *             )
      *         )
      *     ),
@@ -137,7 +139,7 @@ final class StockItemController
     public function store(CreateStockItemRequest $request)
     {
         try {
-            $item = $this->stockService->createItem($request->validated());
+            $item = $this->stockService->createItem($request->all());
 
             return ResponseHelper::success(
                 data: new StockItemResource($item),
@@ -228,15 +230,15 @@ final class StockItemController
      *
      *             @OA\Schema(
      *
-     *                 @OA\Property(property="code", type="string", example="STK-001", description="Unique item code/SKU"),
+     *                 @OA\Property(property="code", type="string", example="BPO-BRS-PRM-25KG", description="Item code format: CATEGORY-PROD-TYPE[-SIZE]. Category (first part) will be auto-extracted"),
      *                 @OA\Property(property="name", type="string", example="Beras Premium 25kg", description="Item name"),
-     *                 @OA\Property(property="category", type="string", example="Beras", description="Item category"),
+     *                 @OA\Property(property="category", type="string", example="Sembako", description="Item category (optional, will be auto-extracted from code if not provided)"),
      *                 @OA\Property(property="unit", type="string", example="karung", description="Unit of measurement"),
-     *                 @OA\Property(property="min_stock", type="integer", example=50, description="Minimum stock level"),
-     *                 @OA\Property(property="max_stock", type="integer", example=500, description="Maximum stock level"),
-     *                 @OA\Property(property="buy_price", type="number", format="float", example=150000, description="Last purchase price"),
-     *                 @OA\Property(property="sell_price", type="number", format="float", example=165000, description="Selling price"),
-     *                 @OA\Property(property="supplier_id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000", description="ID supplier yang terdaftar")
+     *                 @OA\Property(property="minStock", type="integer", example=50, description="Minimum stock level"),
+     *                 @OA\Property(property="maxStock", type="integer", example=500, description="Maximum stock level"),
+     *                 @OA\Property(property="buyPrice", type="number", format="float", example=150000, description="Last purchase price"),
+     *                 @OA\Property(property="sellPrice", type="number", format="float", example=165000, description="Selling price"),
+     *                 @OA\Property(property="supplierId", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000", description="ID supplier yang terdaftar")
      *             )
      *         )
      *     ),
@@ -264,7 +266,7 @@ final class StockItemController
     public function update(UpdateStockItemRequest $request, string $id)
     {
         try {
-            $item = $this->stockService->updateItem($id, $request->validated());
+            $item = $this->stockService->updateItem($id, $request->all());
 
             return ResponseHelper::success(
                 data: new StockItemResource($item),

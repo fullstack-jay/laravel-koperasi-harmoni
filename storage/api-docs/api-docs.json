@@ -215,7 +215,6 @@
                             "schema": {
                                 "required": [
                                     "firstName",
-                                    "lastName",
                                     "username",
                                     "email",
                                     "password",
@@ -228,7 +227,7 @@
                                         "example": "John"
                                     },
                                     "lastName": {
-                                        "description": "Last name",
+                                        "description": "Last name (optional)",
                                         "type": "string",
                                         "example": "Doe"
                                     },
@@ -337,7 +336,6 @@
                             "schema": {
                                 "required": [
                                     "firstName",
-                                    "lastName",
                                     "username",
                                     "email",
                                     "role"
@@ -349,7 +347,7 @@
                                         "example": "John"
                                     },
                                     "lastName": {
-                                        "description": "Last name",
+                                        "description": "Last name (optional)",
                                         "type": "string",
                                         "example": "Doe"
                                     },
@@ -3348,6 +3346,12 @@
                                         "description": "Global search string",
                                         "type": "string",
                                         "example": "Beras"
+                                    },
+                                    "supplierId": {
+                                        "description": "Filter by supplier ID (optional)",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "550e8400-e29b-41d4-a716-446655440000"
                                     }
                                 },
                                 "type": "object"
@@ -3402,58 +3406,52 @@
                                 "required": [
                                     "code",
                                     "name",
-                                    "category",
                                     "unit",
-                                    "min_stock",
-                                    "max_stock",
-                                    "buy_price",
-                                    "sell_price",
-                                    "supplier_id"
+                                    "minStock",
+                                    "maxStock",
+                                    "buyPrice",
+                                    "sellPrice",
+                                    "supplierId"
                                 ],
                                 "properties": {
                                     "code": {
-                                        "description": "Unique item code/SKU",
+                                        "description": "Item code format: CATEGORY-PROD-TYPE[-SIZE]. Product-type combination must be unique. Category (first part) will be auto-extracted and saved to category field",
                                         "type": "string",
-                                        "example": "STK-001"
+                                        "example": "BPO-BRS-PRM-25KG"
                                     },
                                     "name": {
                                         "description": "Item name",
                                         "type": "string",
                                         "example": "Beras Premium 25kg"
                                     },
-                                    "category": {
-                                        "description": "Item category",
-                                        "type": "string",
-                                        "example": "Beras"
-                                    },
                                     "unit": {
                                         "description": "Unit of measurement (kg, liter, pcs, etc)",
                                         "type": "string",
                                         "example": "karung"
                                     },
-                                    "min_stock": {
+                                    "minStock": {
                                         "description": "Minimum stock level for low stock alerts",
                                         "type": "integer",
                                         "example": 50
                                     },
-                                    "max_stock": {
+                                    "maxStock": {
                                         "description": "Maximum stock level for overstock alerts",
                                         "type": "integer",
                                         "example": 500
                                     },
-                                    "buy_price": {
+                                    "buyPrice": {
                                         "description": "Last purchase price per unit",
                                         "type": "number",
                                         "format": "float",
                                         "example": 150000
                                     },
-                                    "sell_price": {
+                                    "sellPrice": {
                                         "description": "Selling price per unit",
                                         "type": "number",
                                         "format": "float",
                                         "example": 165000
                                     },
-                                    "supplier_id": {
+                                    "supplierId": {
                                         "description": "Supplier UUID - ID supplier yang terdaftar",
                                         "type": "string",
                                         "format": "uuid",
@@ -3574,9 +3572,9 @@
                             "schema": {
                                 "properties": {
                                     "code": {
-                                        "description": "Unique item code/SKU",
+                                        "description": "Item code format: CATEGORY-PROD-TYPE[-SIZE]. Category (first part) will be auto-extracted",
                                         "type": "string",
-                                        "example": "STK-001"
+                                        "example": "BPO-BRS-PRM-25KG"
                                     },
                                     "name": {
                                         "description": "Item name",
@@ -3584,38 +3582,38 @@
                                         "example": "Beras Premium 25kg"
                                     },
                                     "category": {
-                                        "description": "Item category",
+                                        "description": "Item category (optional, will be auto-extracted from code if not provided)",
                                         "type": "string",
-                                        "example": "Beras"
+                                        "example": "Sembako"
                                     },
                                     "unit": {
                                         "description": "Unit of measurement",
                                         "type": "string",
                                         "example": "karung"
                                     },
-                                    "min_stock": {
+                                    "minStock": {
                                         "description": "Minimum stock level",
                                         "type": "integer",
                                         "example": 50
                                     },
-                                    "max_stock": {
+                                    "maxStock": {
                                         "description": "Maximum stock level",
                                         "type": "integer",
                                         "example": 500
                                     },
-                                    "buy_price": {
+                                    "buyPrice": {
                                         "description": "Last purchase price",
                                         "type": "number",
                                         "format": "float",
                                         "example": 150000
                                     },
-                                    "sell_price": {
+                                    "sellPrice": {
                                         "description": "Selling price",
                                         "type": "number",
                                         "format": "float",
                                         "example": 165000
                                     },
-                                    "supplier_id": {
+                                    "supplierId": {
                                         "description": "ID supplier yang terdaftar",
                                         "type": "string",
                                         "format": "uuid",
@@ -4288,7 +4286,6 @@
                 "description": "Request schema for creating a new user (admin or regular user)",
                 "required": [
                     "firstName",
-                    "lastName",
                     "username",
                     "email",
                     "password",
@@ -4302,7 +4299,7 @@
                         "example": "John"
                     },
                     "lastName": {
-                        "description": "Last name",
+                        "description": "Last name (optional)",
                         "type": "string",
                         "maxLength": 255,
                         "example": "Doe"
@@ -4470,7 +4467,6 @@
                 "description": "Request schema for updating a user (admin or regular user)",
                 "required": [
                     "firstName",
-                    "lastName",
                     "username",
                     "email",
                     "role"
@@ -4483,7 +4479,7 @@
                         "example": "John"
                     },
                     "lastName": {
-                        "description": "Last name",
+                        "description": "Last name (optional)",
                         "type": "string",
                         "maxLength": 255,
                         "example": "Doe"
@@ -4843,51 +4839,51 @@
                 "required": [
                     "code",
                     "name",
-                    "supplier_id"
+                    "minStock",
+                    "maxStock",
+                    "buyPrice",
+                    "sellPrice",
+                    "supplierId"
                 ],
                 "properties": {
                     "code": {
-                        "description": "Unique item code/SKU",
+                        "description": "Item code format: CATEGORY-PROD-TYPE[-SIZE]. Product-type combination must be unique. Category (first part) will be auto-extracted and saved to category field",
                         "type": "string",
                         "maxLength": 255,
-                        "example": "STK-001"
+                        "example": "BPO-BRS-PRM-25KG"
                     },
                     "name": {
+                        "description": "Item name (must be unique)",
                         "type": "string",
                         "maxLength": 255,
                         "example": "Beras Premium 25kg"
-                    },
-                    "category": {
-                        "type": "string",
-                        "maxLength": 255,
-                        "example": "Sembako"
                     },
                     "unit": {
                         "type": "string",
                         "maxLength": 50,
                         "example": "karung"
                     },
-                    "min_stock": {
+                    "minStock": {
                         "description": "Minimum stock level for alerts",
                         "type": "integer",
                         "example": 50
                     },
-                    "max_stock": {
+                    "maxStock": {
                         "description": "Maximum stock level for overstock alerts",
                         "type": "integer",
                         "example": 500
                     },
-                    "buy_price": {
+                    "buyPrice": {
                         "type": "number",
                         "format": "decimal",
                         "example": 150000
                     },
-                    "sell_price": {
+                    "sellPrice": {
                         "type": "number",
                         "format": "decimal",
                         "example": 165000
                     },
-                    "supplier_id": {
+                    "supplierId": {
                         "description": "ID supplier yang terdaftar",
                         "type": "string",
                         "format": "uuid",
@@ -4945,10 +4941,10 @@
                 "description": "Schema for updating an existing stock item",
                 "properties": {
                     "code": {
-                        "description": "Unique item code/SKU",
+                        "description": "Item code format: CATEGORY-PROD-TYPE[-SIZE]. Category (first part) will be auto-extracted",
                         "type": "string",
                         "maxLength": 255,
-                        "example": "STK-001"
+                        "example": "BPO-BRS-PRM-25KG"
                     },
                     "name": {
                         "type": "string",
@@ -4956,6 +4952,7 @@
                         "example": "Beras Premium 25kg"
                     },
                     "category": {
+                        "description": "Item category (optional, will be auto-extracted from code if not provided)",
                         "type": "string",
                         "maxLength": 255,
                         "example": "Sembako"
@@ -4965,27 +4962,27 @@
                         "maxLength": 50,
                         "example": "karung"
                     },
-                    "min_stock": {
+                    "minStock": {
                         "description": "Minimum stock level",
                         "type": "integer",
                         "example": 50
                     },
-                    "max_stock": {
+                    "maxStock": {
                         "description": "Maximum stock level",
                         "type": "integer",
                         "example": 500
                     },
-                    "buy_price": {
+                    "buyPrice": {
                         "type": "number",
                         "format": "decimal",
                         "example": 150000
                     },
-                    "sell_price": {
+                    "sellPrice": {
                         "type": "number",
                         "format": "decimal",
                         "example": 165000
                     },
-                    "supplier_id": {
+                    "supplierId": {
                         "description": "ID supplier yang terdaftar",
                         "type": "string",
                         "format": "uuid",
@@ -5137,6 +5134,10 @@
                     "minStock": {
                         "type": "integer",
                         "example": 100
+                    },
+                    "maxStock": {
+                        "type": "integer",
+                        "example": 500
                     },
                     "buyPrice": {
                         "type": "number",
