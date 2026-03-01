@@ -6,6 +6,7 @@ namespace Modules\V1\Stock\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\V1\Stock\Enums\CategoryEnum;
 
 /**
  * @OA\Schema(
@@ -14,9 +15,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     description="Schema for the stock item resource",
  *     type="object",
  *     @OA\Property(property="id", type="string", format="uuid"),
- *     @OA\Property(property="code", type="string", example="STK-001"),
+ *     @OA\Property(property="code", type="string", example="BPO-BRS-PRM-25KG"),
  *     @OA\Property(property="name", type="string", example="Beras Premium"),
- *     @OA\Property(property="category", type="string", example="Sembako"),
+ *     @OA\Property(property="category", type="string", example="Bahan Pokok", description="Full category name (translated from code)"),
+ *     @OA\Property(property="categoryCode", type="string", example="BPO", description="Category abbreviation code from database"),
  *     @OA\Property(property="unit", type="string", example="kg"),
  *     @OA\Property(property="minStock", type="integer", example=100),
  *     @OA\Property(property="maxStock", type="integer", example=500),
@@ -35,7 +37,8 @@ final class StockItemResource extends JsonResource
             'id' => $this->id,
             'code' => $this->code,
             'name' => $this->name,
-            'category' => $this->category,
+            'category' => CategoryEnum::getFullNameByCode($this->category),
+            'categoryCode' => $this->category, // Original code from database
             'unit' => $this->unit,
             'minStock' => $this->min_stock,
             'maxStock' => $this->max_stock,

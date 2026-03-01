@@ -9,6 +9,14 @@ use Modules\V1\Stock\Controllers\StockBatchController;
 use Modules\V1\Stock\Controllers\StockItemController;
 
 Route::middleware(['auth:sanctum', 'role:koperasi'])->group(function (): void {
+    // Categories
+    Route::post('Categories/List', function () {
+        return response()->json([
+            'data' => \Modules\V1\Stock\Enums\CategoryEnum::getAll(),
+            'message' => 'Categories retrieved successfully'
+        ]);
+    })->name('categories.list');
+
     // Stock Items
     Route::prefix('Items')->as('items:')->group(function (): void {
         Route::post('LoadData', [StockItemController::class, 'index'])->name('index');

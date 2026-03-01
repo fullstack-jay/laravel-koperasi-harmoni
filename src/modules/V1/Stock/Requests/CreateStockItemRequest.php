@@ -37,33 +37,59 @@ class CreateStockItemRequest extends FormRequest
             'code' => ['required', 'string', 'max:255', new UniqueStockItemCodeKey],
             'name' => ['required', 'string', 'max:255', 'unique:stock_items,name'],
             'unit' => ['nullable', 'string', 'max:50'],
-            'minStock' => ['required', 'integer', 'min:0', 'lte:maxStock'],
-            'maxStock' => ['required', 'integer', 'min:0', 'gte:minStock'],
-            'buyPrice' => ['required', 'numeric', 'min:0'],
-            'sellPrice' => ['required', 'numeric', 'min:0'],
-            'supplierId' => ['required', 'uuid', 'exists:suppliers,id'],
+            'minStock' => ['required_without:min_stock', 'integer', 'min:0', 'lte:maxStock|max_stock'],
+            'maxStock' => ['required_without:max_stock', 'integer', 'min:0', 'gte:minStock|min_stock'],
+            'buyPrice' => ['required_without:buy_price', 'numeric', 'min:0'],
+            'sellPrice' => ['required_without:sell_price', 'numeric', 'min:0'],
+            'supplierId' => ['required_without:supplier_id', 'uuid', 'exists:suppliers,id'],
+            // Also accept snake_case for backward compatibility
+            'min_stock' => ['required_without:minStock', 'integer', 'min:0', 'lte:maxStock|max_stock'],
+            'max_stock' => ['required_without:maxStock', 'integer', 'min:0', 'gte:minStock|min_stock'],
+            'buy_price' => ['required_without:buyPrice', 'numeric', 'min:0'],
+            'sell_price' => ['required_without:sellPrice', 'numeric', 'min:0'],
+            'supplier_id' => ['required_without:supplierId', 'uuid', 'exists:suppliers,id'],
         ];
     }
 
     protected function prepareForValidation(): void
     {
         // Convert camelCase to snake_case for database
+        // Support both camelCase and snake_case input
         $converted = [];
 
+        // minStock / min_stock
         if ($this->has('minStock')) {
             $converted['min_stock'] = $this->input('minStock');
+        } elseif ($this->has('min_stock')) {
+            $converted['min_stock'] = $this->input('min_stock');
         }
+
+        // maxStock / max_stock
         if ($this->has('maxStock')) {
             $converted['max_stock'] = $this->input('maxStock');
+        } elseif ($this->has('max_stock')) {
+            $converted['max_stock'] = $this->input('max_stock');
         }
+
+        // buyPrice / buy_price
         if ($this->has('buyPrice')) {
             $converted['buy_price'] = $this->input('buyPrice');
+        } elseif ($this->has('buy_price')) {
+            $converted['buy_price'] = $this->input('buy_price');
         }
+
+        // sellPrice / sell_price
         if ($this->has('sellPrice')) {
             $converted['sell_price'] = $this->input('sellPrice');
+        } elseif ($this->has('sell_price')) {
+            $converted['sell_price'] = $this->input('sell_price');
         }
+
+        // supplierId / supplier_id
         if ($this->has('supplierId')) {
             $converted['supplier_id'] = $this->input('supplierId');
+        } elseif ($this->has('supplier_id')) {
+            $converted['supplier_id'] = $this->input('supplier_id');
         }
 
         $this->merge($converted);

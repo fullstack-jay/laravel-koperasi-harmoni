@@ -39,33 +39,59 @@ class UpdateStockItemRequest extends FormRequest
             'name' => ['nullable', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:255'],
             'unit' => ['nullable', 'string', 'max:50'],
-            'minStock' => ['nullable', 'integer', 'min:0', 'lte:maxStock'],
-            'maxStock' => ['nullable', 'integer', 'min:0', 'gte:minStock'],
+            'minStock' => ['nullable', 'integer', 'min:0', 'lte:maxStock|max_stock'],
+            'maxStock' => ['nullable', 'integer', 'min:0', 'gte:minStock|min_stock'],
             'buyPrice' => ['nullable', 'numeric', 'min:0'],
             'sellPrice' => ['nullable', 'numeric', 'min:0'],
             'supplierId' => ['nullable', 'uuid', 'exists:suppliers,id'],
+            // Also accept snake_case for backward compatibility
+            'min_stock' => ['nullable', 'integer', 'min:0', 'lte:maxStock|max_stock'],
+            'max_stock' => ['nullable', 'integer', 'min:0', 'gte:minStock|min_stock'],
+            'buy_price' => ['nullable', 'numeric', 'min:0'],
+            'sell_price' => ['nullable', 'numeric', 'min:0'],
+            'supplier_id' => ['nullable', 'uuid', 'exists:suppliers,id'],
         ];
     }
 
     protected function prepareForValidation(): void
     {
         // Convert camelCase to snake_case for database
+        // Support both camelCase and snake_case input
         $converted = [];
 
+        // minStock / min_stock
         if ($this->has('minStock')) {
             $converted['min_stock'] = $this->input('minStock');
+        } elseif ($this->has('min_stock')) {
+            $converted['min_stock'] = $this->input('min_stock');
         }
+
+        // maxStock / max_stock
         if ($this->has('maxStock')) {
             $converted['max_stock'] = $this->input('maxStock');
+        } elseif ($this->has('max_stock')) {
+            $converted['max_stock'] = $this->input('max_stock');
         }
+
+        // buyPrice / buy_price
         if ($this->has('buyPrice')) {
             $converted['buy_price'] = $this->input('buyPrice');
+        } elseif ($this->has('buy_price')) {
+            $converted['buy_price'] = $this->input('buy_price');
         }
+
+        // sellPrice / sell_price
         if ($this->has('sellPrice')) {
             $converted['sell_price'] = $this->input('sellPrice');
+        } elseif ($this->has('sell_price')) {
+            $converted['sell_price'] = $this->input('sell_price');
         }
+
+        // supplierId / supplier_id
         if ($this->has('supplierId')) {
             $converted['supplier_id'] = $this->input('supplierId');
+        } elseif ($this->has('supplier_id')) {
+            $converted['supplier_id'] = $this->input('supplier_id');
         }
 
         $this->merge($converted);
