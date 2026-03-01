@@ -2530,14 +2530,14 @@
                 ]
             }
         },
-        "/Purchase-Orders/{po}/Send": {
+        "/PurchaseOrders/{po}/Send": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Send PO to supplier",
                 "description": "Send purchase order to supplier and notify them",
-                "operationId": "6626066cab6a8fabd55273149ba17511",
+                "operationId": "3fd4866b59e9532ed28e7798f927cde3",
                 "parameters": [
                     {
                         "name": "po",

@@ -9,6 +9,7 @@ use Modules\V1\PurchaseOrder\Controllers\POUpdateController;
 use Modules\V1\PurchaseOrder\Controllers\POSupplierController;
 use Modules\V1\PurchaseOrder\Controllers\POKoperasiController;
 use Modules\V1\PurchaseOrder\Controllers\POCancelController;
+use Modules\V1\PurchaseOrder\Controllers\POSendController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,6 +26,9 @@ Route::middleware(['auth:sanctum', 'role:koperasi'])->group(function () {
 
     // Show specific PO - must come after specific routes
     Route::post('{po}', [POController::class, 'show'])->name('show');
+
+    // Send PO to supplier - must come before {po}/update route
+    Route::post('{po}/Send', [POSendController::class, 'send'])->name('send');
 
     // Update PO
     Route::post('{po}/update', [POUpdateController::class, 'update'])->name('update');

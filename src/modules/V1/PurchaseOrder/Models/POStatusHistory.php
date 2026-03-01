@@ -12,6 +12,8 @@ class POStatusHistory extends BaseModel
 {
     use HasFactory;
 
+    protected $table = 'po_status_histories';
+
     protected $fillable = [
         'purchase_order_id',
         'from_status',
