@@ -21,7 +21,7 @@ final class POUpdateController extends POBaseController
 
     /**
      * @OA\Post(
-     *     path="/purchase-orders/{po}/update",
+     *     path="/PurchaseOrders/{po}/update",
      *     summary="Update purchase order",
      *     description="Update a draft purchase order",
      *     tags={"Purchase Orders"},

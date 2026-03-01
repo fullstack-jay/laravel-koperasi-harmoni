@@ -18,24 +18,26 @@ use Modules\V1\PurchaseOrder\Controllers\POCancelController;
 
 Route::middleware(['auth:sanctum', 'role:koperasi'])->group(function () {
     // List and view POs
-    Route::post('/purchase-orders/list', [POController::class, 'index']);
-    Route::post('/purchase-orders/{po}', [POController::class, 'show']);
+    Route::post('LoadData', [POController::class, 'index'])->name('list');
 
-    // Create PO
-    Route::post('/purchase-orders/Create', POCreateController::class);
+    // Create PO - must come before {po} route
+    Route::post('Create', POCreateController::class)->name('create');
+
+    // Show specific PO - must come after specific routes
+    Route::post('{po}', [POController::class, 'show'])->name('show');
 
     // Update PO
-    Route::post('/purchase-orders/{po}/update', [POUpdateController::class, 'update']);
+    Route::post('{po}/update', [POUpdateController::class, 'update'])->name('update');
 
     // Supplier actions
-    Route::post('/purchase-orders/{po}/supplier/confirm', [POSupplierController::class, 'confirm']);
-    Route::post('/purchase-orders/{po}/supplier/reject', [POSupplierController::class, 'reject']);
+    Route::post('{po}/supplier/confirm', [POSupplierController::class, 'confirm'])->name('supplier.confirm');
+    Route::post('{po}/supplier/reject', [POSupplierController::class, 'reject'])->name('supplier.reject');
 
     // Koperasi actions
-    Route::post('/purchase-orders/{po}/koperasi/confirm', [POKoperasiController::class, 'confirmSupplierResponse']);
-    Route::post('/purchase-orders/{po}/koperasi/reject', [POKoperasiController::class, 'rejectSupplierResponse']);
-    Route::post('/purchase-orders/{po}/koperasi/receive', [POKoperasiController::class, 'receiveGoods']);
+    Route::post('{po}/koperasi/confirm', [POKoperasiController::class, 'confirmSupplierResponse'])->name('koperasi.confirm');
+    Route::post('{po}/koperasi/reject', [POKoperasiController::class, 'rejectSupplierResponse'])->name('koperasi.reject');
+    Route::post('{po}/koperasi/receive', [POKoperasiController::class, 'receiveGoods'])->name('koperasi.receive');
 
     // Cancel PO
-    Route::post('/purchase-orders/{po}/cancel', POCancelController::class);
+    Route::post('{po}/cancel', POCancelController::class)->name('cancel');
 });

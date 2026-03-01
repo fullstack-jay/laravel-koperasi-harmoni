@@ -13,7 +13,7 @@ final class POController extends POBaseController
 {
     /**
      * @OA\Post(
-     *      path="/purchase-orders/list",
+     *      path="/PurchaseOrders/LoadData",
      *      summary="Get all purchase orders",
      *      description="Returns a paginated list of purchase orders",
      *      tags={"Purchase Orders"},
@@ -80,7 +80,7 @@ final class POController extends POBaseController
 
     /**
      * @OA\Post(
-     *     path="/purchase-orders/{po}",
+     *     path="/PurchaseOrders/{po}",
      *     summary="Get purchase order detail",
      *     description="Get detailed information about a specific purchase order",
      *     tags={"Purchase Orders"},

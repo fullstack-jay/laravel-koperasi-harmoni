@@ -114,7 +114,7 @@ final class POService
 
         if ($lastPO) {
             $lastNumber = (int) Str::after($lastPO->po_number, "{$prefix}-");
-            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+            $newNumber = str_pad((string)($lastNumber + 1), 4, '0', STR_PAD_LEFT);
         } else {
             $newNumber = '0001';
         }

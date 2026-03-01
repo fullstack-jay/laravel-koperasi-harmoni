@@ -21,7 +21,7 @@ final class POKoperasiController extends POBaseController
 
     /**
      * @OA\Post(
-     *     path="/purchase-orders/{po}/koperasi/confirm",
+     *     path="/PurchaseOrders/{po}/koperasi/confirm",
      *     summary="Koperasi confirms supplier response",
      *     description="Koperasi confirms supplier's price/quantity confirmation",
      *     tags={"Purchase Orders"},
@@ -63,7 +63,7 @@ final class POKoperasiController extends POBaseController
 
     /**
      * @OA\Post(
-     *     path="/purchase-orders/{po}/koperasi/reject",
+     *     path="/PurchaseOrders/{po}/koperasi/reject",
      *     summary="Koperasi rejects supplier response",
      *     description="Koperasi rejects supplier's price/quantity confirmation",
      *     tags={"Purchase Orders"},
@@ -120,7 +120,7 @@ final class POKoperasiController extends POBaseController
 
     /**
      * @OA\Post(
-     *     path="/purchase-orders/{po}/koperasi/receive",
+     *     path="/PurchaseOrders/{po}/koperasi/receive",
      *     summary="Receive goods from PO",
      *     description="Receive goods from supplier, create stock batches, and record purchase transaction",
      *     tags={"Purchase Orders"},

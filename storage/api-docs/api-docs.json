@@ -2140,14 +2140,14 @@
                 ]
             }
         },
-        "/purchase-orders/{po}/cancel": {
+        "/PurchaseOrders/{po}/cancel": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Cancel purchase order",
                 "description": "Cancel a purchase order",
-                "operationId": "e0ddd0592675055d7e077ec36185e0d7",
+                "operationId": "1003d9bd0f27ba767abd2fc311a17a40",
                 "parameters": [
                     {
                         "name": "po",
@@ -2191,14 +2191,14 @@
                 ]
             }
         },
-        "/purchase-orders/list": {
+        "/PurchaseOrders/LoadData": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Get all purchase orders",
                 "description": "Returns a paginated list of purchase orders",
-                "operationId": "6a9f0115030c731a20950b2869042a7c",
+                "operationId": "14deb7b1d26a25afdb0f61fbfb73436a",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2251,14 +2251,14 @@
                 ]
             }
         },
-        "/purchase-orders/{po}": {
+        "/PurchaseOrders/{po}": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Get purchase order detail",
                 "description": "Get detailed information about a specific purchase order",
-                "operationId": "d20f6217017f306a7cc19f9da85a6627",
+                "operationId": "0b0b3be7dfb9211e65ad0d490aacad1d",
                 "parameters": [
                     {
                         "name": "po",
@@ -2283,34 +2283,34 @@
                 ]
             }
         },
-        "/purchase-orders/create": {
+        "/PurchaseOrders/Create": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Create purchase order",
                 "description": "Create a new draft purchase order",
-                "operationId": "cc7c7709a3f4f49e7eb96d495cc4f5ab",
+                "operationId": "517cceffb21777e4152cd4a48417312b",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "supplier_id",
+                                    "supplierId",
                                     "items"
                                 ],
                                 "properties": {
-                                    "supplier_id": {
+                                    "supplierId": {
                                         "type": "string",
                                         "format": "uuid"
                                     },
-                                    "po_date": {
+                                    "poDate": {
                                         "type": "string",
                                         "format": "date",
                                         "example": "2025-01-15"
                                     },
-                                    "estimated_delivery_date": {
+                                    "estimatedDeliveryDate": {
                                         "type": "string",
                                         "format": "date",
                                         "example": "2025-01-20"
@@ -2319,30 +2319,35 @@
                                         "type": "array",
                                         "items": {
                                             "required": [
-                                                "item_id",
-                                                "estimated_qty",
-                                                "estimated_unit_price"
+                                                "itemId",
+                                                "estimatedQty",
+                                                "estimatedUnitPrice"
                                             ],
                                             "properties": {
-                                                "item_id": {
+                                                "itemId": {
                                                     "type": "string",
                                                     "format": "uuid"
                                                 },
-                                                "estimated_qty": {
+                                                "estimatedQty": {
                                                     "type": "integer",
                                                     "example": 100
                                                 },
-                                                "estimated_unit_price": {
+                                                "estimatedUnitPrice": {
                                                     "type": "number",
                                                     "format": "float",
                                                     "example": 15000
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "nullable": true
                                                 }
                                             },
                                             "type": "object"
                                         }
                                     },
                                     "notes": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -2362,14 +2367,14 @@
                 ]
             }
         },
-        "/purchase-orders/{po}/koperasi/confirm": {
+        "/PurchaseOrders/{po}/koperasi/confirm": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Koperasi confirms supplier response",
                 "description": "Koperasi confirms supplier's price/quantity confirmation",
-                "operationId": "1ee5c4fe0555fc1fa08c09bcc1fe1e17",
+                "operationId": "4a4e9f6af238b57a742587fbc6d7a55d",
                 "parameters": [
                     {
                         "name": "po",
@@ -2394,14 +2399,14 @@
                 ]
             }
         },
-        "/purchase-orders/{po}/koperasi/reject": {
+        "/PurchaseOrders/{po}/koperasi/reject": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Koperasi rejects supplier response",
                 "description": "Koperasi rejects supplier's price/quantity confirmation",
-                "operationId": "a7865d9fbca45269c197b754e753a956",
+                "operationId": "5e788ee83d8a74fc1b2253411b50d64b",
                 "parameters": [
                     {
                         "name": "po",
@@ -2444,14 +2449,14 @@
                 ]
             }
         },
-        "/purchase-orders/{po}/koperasi/receive": {
+        "/PurchaseOrders/{po}/koperasi/receive": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Receive goods from PO",
                 "description": "Receive goods from supplier, create stock batches, and record purchase transaction",
-                "operationId": "ecd558efd6f45b8c37fbbabc57b9594c",
+                "operationId": "99a791636e3c3346dd702b3ad5c75fe9",
                 "parameters": [
                     {
                         "name": "po",
@@ -2525,14 +2530,49 @@
                 ]
             }
         },
-        "/purchase-orders/{po}/supplier/confirm": {
+        "/Purchase-Orders/{po}/Send": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Send PO to supplier",
+                "description": "Send purchase order to supplier and notify them",
+                "operationId": "6626066cab6a8fabd55273149ba17511",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PO sent successfully"
+                    },
+                    "400": {
+                        "description": "Cannot send PO in current status"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/PurchaseOrders/{po}/supplier/confirm": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Supplier confirms PO",
                 "description": "Supplier confirms purchase order with final prices and quantities",
-                "operationId": "5dd8b0fddb482218c0371c83737d3ec1",
+                "operationId": "f2bd91ae922bdb1fd5a27985782ba0df",
                 "parameters": [
                     {
                         "name": "po",
@@ -2596,14 +2636,14 @@
                 ]
             }
         },
-        "/purchase-orders/{po}/supplier/reject": {
+        "/PurchaseOrders/{po}/supplier/reject": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Supplier rejects PO",
                 "description": "Supplier rejects purchase order with reason",
-                "operationId": "72cc7e95ce7aa0ff60554474591b5b06",
+                "operationId": "6f526c3ac2a276f19328c97670b850b3",
                 "parameters": [
                     {
                         "name": "po",
@@ -2647,14 +2687,14 @@
                 ]
             }
         },
-        "/purchase-orders/{po}/update": {
+        "/PurchaseOrders/{po}/update": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Update purchase order",
                 "description": "Update a draft purchase order",
-                "operationId": "58d15db2d572a485586a1acd4e0017d6",
+                "operationId": "31444569d1a58830843eff5750d3eab4",
                 "parameters": [
                     {
                         "name": "po",
@@ -5212,6 +5252,42 @@
                             "suspended"
                         ],
                         "example": "active"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateHargaLoadDataRequest": {
+                "title": "Update Harga Load Data Request",
+                "description": "Schema for loading purchase orders data for price update",
+                "properties": {
+                    "pageNumber": {
+                        "description": "Page number",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "pageSize": {
+                        "description": "Items per page",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "sortDir": {
+                        "description": "Sort direction",
+                        "type": "string",
+                        "enum": [
+                            "ASC",
+                            "DESC"
+                        ],
+                        "example": "ASC"
+                    },
+                    "sortDirColumn": {
+                        "description": "Column to sort by",
+                        "type": "string",
+                        "example": "id"
+                    },
+                    "search": {
+                        "description": "Search string",
+                        "type": "string",
+                        "example": ""
                     }
                 },
                 "type": "object"

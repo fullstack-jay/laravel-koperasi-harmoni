@@ -17,14 +17,14 @@ class POItemResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'item_id' => $this->item_id,
-            'item_name' => $this->whenLoaded('stockItem', fn() => $this->stockItem->name),
-            'estimated_unit_price' => (float) $this->estimated_unit_price,
-            'estimated_qty' => $this->estimated_qty,
-            'estimated_subtotal' => (float) $this->estimated_subtotal,
-            'actual_unit_price' => $this->actual_unit_price ? (float) $this->actual_unit_price : null,
-            'actual_qty' => $this->actual_qty,
-            'actual_subtotal' => $this->actual_subtotal ? (float) $this->actual_subtotal : null,
+            'itemId' => $this->item_id,
+            'itemName' => $this->whenLoaded('stockItem', fn() => $this->stockItem->name),
+            'estimatedUnitPrice' => (float) $this->estimated_unit_price,
+            'estimatedQty' => $this->estimated_qty,
+            'estimatedSubtotal' => (float) $this->estimated_subtotal,
+            'actualUnitPrice' => $this->actual_unit_price ? (float) $this->actual_unit_price : null,
+            'actualQty' => $this->actual_qty,
+            'actualSubtotal' => $this->actual_subtotal ? (float) $this->actual_subtotal : null,
             'notes' => $this->notes,
         ];
     }

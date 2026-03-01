@@ -19,7 +19,7 @@ final class POCancelController extends POBaseController
 
     /**
      * @OA\Post(
-     *     path="/purchase-orders/{po}/cancel",
+     *     path="/PurchaseOrders/{po}/cancel",
      *     summary="Cancel purchase order",
      *     description="Cancel a purchase order",
      *     tags={"Purchase Orders"},

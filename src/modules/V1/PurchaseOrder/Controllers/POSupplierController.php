@@ -19,7 +19,7 @@ final class POSupplierController extends POBaseController
 
     /**
      * @OA\Post(
-     *     path="/purchase-orders/{po}/supplier/confirm",
+     *     path="/PurchaseOrders/{po}/supplier/confirm",
      *     summary="Supplier confirms PO",
      *     description="Supplier confirms purchase order with final prices and quantities",
      *     tags={"Purchase Orders"},
@@ -84,7 +84,7 @@ final class POSupplierController extends POBaseController
 
     /**
      * @OA\Post(
-     *     path="/purchase-orders/{po}/supplier/reject",
+     *     path="/PurchaseOrders/{po}/supplier/reject",
      *     summary="Supplier rejects PO",
      *     description="Supplier rejects purchase order with reason",
      *     tags={"Purchase Orders"},

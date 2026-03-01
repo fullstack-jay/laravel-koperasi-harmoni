@@ -46,7 +46,7 @@ Route::middleware(['auth:sanctum'])->prefix('Stock')->as('stock:')->group(
 /**
  * Purchase Order Routes
  */
-Route::middleware(['auth:sanctum'])->prefix('purchase-orders')->as('purchase-orders:')->group(
+Route::middleware(['auth:sanctum'])->prefix('PurchaseOrders')->as('purchase-orders:')->group(
     base_path('routes/v1/purchase-orders.php'),
 );
 
