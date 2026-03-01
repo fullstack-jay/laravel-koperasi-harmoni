@@ -2367,14 +2367,14 @@
                 ]
             }
         },
-        "/PurchaseOrders/{po}/koperasi/confirm": {
+        "/PurchaseOrders/{po}/Koperasi/Confirm": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Koperasi confirms supplier response",
                 "description": "Koperasi confirms supplier's price/quantity confirmation",
-                "operationId": "4a4e9f6af238b57a742587fbc6d7a55d",
+                "operationId": "ea467dc37cce63ac78d7c215624411a1",
                 "parameters": [
                     {
                         "name": "po",
@@ -2399,14 +2399,14 @@
                 ]
             }
         },
-        "/PurchaseOrders/{po}/koperasi/reject": {
+        "/PurchaseOrders/{po}/Koperasi/Reject": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
-                "summary": "Koperasi rejects supplier response",
-                "description": "Koperasi rejects supplier's price/quantity confirmation",
-                "operationId": "5e788ee83d8a74fc1b2253411b50d64b",
+                "summary": "Koperasi rejects PO",
+                "description": "Koperasi rejects supplier's response or price change request",
+                "operationId": "f836a923826b8e0fffc79d22c3da54b5",
                 "parameters": [
                     {
                         "name": "po",
@@ -2439,7 +2439,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Supplier response rejected successfully"
+                        "description": "PO rejected successfully"
                     }
                 },
                 "security": [
@@ -2449,14 +2449,14 @@
                 ]
             }
         },
-        "/PurchaseOrders/{po}/koperasi/receive": {
+        "/PurchaseOrders/{po}/Koperasi/Receive": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Receive goods from PO",
                 "description": "Receive goods from supplier, create stock batches, and record purchase transaction",
-                "operationId": "99a791636e3c3346dd702b3ad5c75fe9",
+                "operationId": "6ca2de94a0702391ed40bd3d4da4251d",
                 "parameters": [
                     {
                         "name": "po",
@@ -2530,6 +2530,125 @@
                 ]
             }
         },
+        "/PurchaseOrders/{po}/Koperasi/Review/Approve": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Koperasi approves price change",
+                "description": "Koperasi approves the price changes proposed by supplier",
+                "operationId": "236672543e2610cb69bc89d7a8dd75a7",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Price change approved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/PurchaseOrders/{po}/Koperasi/Review/EditAndResend": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Koperasi edits PO and resends to supplier",
+                "description": "Koperasi modifies items/quantities and resends PO to supplier for confirmation",
+                "operationId": "389e051d38c0100dae29d5a3500056eb",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "items"
+                                ],
+                                "properties": {
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Updated item list"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "item_id",
+                                                "estimated_unit_price",
+                                                "estimated_qty"
+                                            ],
+                                            "properties": {
+                                                "item_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "estimated_unit_price": {
+                                                    "type": "number",
+                                                    "format": "float"
+                                                },
+                                                "estimated_qty": {
+                                                    "type": "integer"
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "remove_items": {
+                                        "description": "List of item IDs to remove",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "PO edited and resent successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/PurchaseOrders/{po}/Send": {
             "post": {
                 "tags": [
@@ -2565,14 +2684,14 @@
                 ]
             }
         },
-        "/PurchaseOrders/{po}/supplier/confirm": {
+        "/PurchaseOrders/{po}/Supplier/Confirm": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
-                "summary": "Supplier confirms PO",
-                "description": "Supplier confirms purchase order with final prices and quantities",
-                "operationId": "f2bd91ae922bdb1fd5a27985782ba0df",
+                "summary": "Supplier confirms PO with prices",
+                "description": "Supplier confirms purchase order by providing actual prices and invoice number",
+                "operationId": "ce6a1db56ca7f72813af2610bcfdbc93",
                 "parameters": [
                     {
                         "name": "po",
@@ -2594,25 +2713,27 @@
                                     "items"
                                 ],
                                 "properties": {
+                                    "invoiceNumber": {
+                                        "type": "string",
+                                        "example": "INV-2026-001"
+                                    },
                                     "items": {
                                         "type": "array",
                                         "items": {
                                             "required": [
-                                                "item_id",
-                                                "confirmed_qty",
-                                                "confirmed_unit_price"
+                                                "itemId",
+                                                "actualPrice"
                                             ],
                                             "properties": {
-                                                "item_id": {
+                                                "itemId": {
+                                                    "description": "Stock Item ID",
                                                     "type": "string",
                                                     "format": "uuid"
                                                 },
-                                                "confirmed_qty": {
-                                                    "type": "integer"
-                                                },
-                                                "confirmed_unit_price": {
+                                                "actualPrice": {
                                                     "type": "number",
-                                                    "format": "float"
+                                                    "format": "float",
+                                                    "example": 15000
                                                 }
                                             },
                                             "type": "object"
@@ -2636,14 +2757,14 @@
                 ]
             }
         },
-        "/PurchaseOrders/{po}/supplier/reject": {
+        "/PurchaseOrders/{po}/Supplier/Reject": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Supplier rejects PO",
                 "description": "Supplier rejects purchase order with reason",
-                "operationId": "6f526c3ac2a276f19328c97670b850b3",
+                "operationId": "a49f36cc0b836080fd23bc5ffe5d0a35",
                 "parameters": [
                     {
                         "name": "po",
@@ -2687,14 +2808,14 @@
                 ]
             }
         },
-        "/PurchaseOrders/{po}/update": {
+        "/PurchaseOrders/Update/{po}": {
             "post": {
                 "tags": [
                     "Purchase Orders"
                 ],
                 "summary": "Update purchase order",
                 "description": "Update a draft purchase order",
-                "operationId": "31444569d1a58830843eff5750d3eab4",
+                "operationId": "3b5f39350f70785fb9cf54480ad40e22",
                 "parameters": [
                     {
                         "name": "po",

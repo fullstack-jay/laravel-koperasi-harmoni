@@ -51,8 +51,8 @@ final class POKoperasiService
             throw new Exception('Purchase Order not found');
         }
 
-        if ($po->status !== POStatusEnum::DIKONFIRMASI_SUPPLIER) {
-            throw new Exception('PO must be in DIKONFIRMASI_SUPPLIER status');
+        if (!in_array($po->status, [POStatusEnum::DIKONFIRMASI_SUPPLIER, POStatusEnum::PERUBAHAN_HARGA])) {
+            throw new Exception('PO must be in DIKONFIRMASI_SUPPLIER or PERUBAHAN_HARGA status');
         }
 
         $po->update(['rejection_reason' => $reason]);

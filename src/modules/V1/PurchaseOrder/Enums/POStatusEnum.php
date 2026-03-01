@@ -8,6 +8,7 @@ enum POStatusEnum: string
 {
     case DRAFT = 'draft';
     case TERKIRIM = 'terkirim';
+    case PERUBAHAN_HARGA = 'perubahan_harga';
     case DIKONFIRMASI_SUPPLIER = 'dikonfirmasi_supplier';
     case DIKONFIRMASI_KOPERASI = 'dikonfirmasi_koperasi';
     case SELESAI = 'selesai';
@@ -18,6 +19,7 @@ enum POStatusEnum: string
         return match ($this) {
             self::DRAFT => 'Draft',
             self::TERKIRIM => 'Terkirim',
+            self::PERUBAHAN_HARGA => 'Perubahan Harga',
             self::DIKONFIRMASI_SUPPLIER => 'Dikonfirmasi Supplier',
             self::DIKONFIRMASI_KOPERASI => 'Dikonfirmasi Koperasi',
             self::SELESAI => 'Selesai',
@@ -29,7 +31,8 @@ enum POStatusEnum: string
     {
         return match ($this) {
             self::DRAFT => in_array($status, [self::TERKIRIM, self::DIBATALKAN]),
-            self::TERKIRIM => in_array($status, [self::DIKONFIRMASI_SUPPLIER, self::DIBATALKAN]),
+            self::TERKIRIM => in_array($status, [self::PERUBAHAN_HARGA, self::DIKONFIRMASI_SUPPLIER, self::DIBATALKAN]),
+            self::PERUBAHAN_HARGA => in_array($status, [self::TERKIRIM, self::DIKONFIRMASI_SUPPLIER, self::DIBATALKAN]),
             self::DIKONFIRMASI_SUPPLIER => in_array($status, [self::DIKONFIRMASI_KOPERASI, self::DIBATALKAN]),
             self::DIKONFIRMASI_KOPERASI => in_array($status, [self::SELESAI, self::DIBATALKAN]),
             self::SELESAI => false,

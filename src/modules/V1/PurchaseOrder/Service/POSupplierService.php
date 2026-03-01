@@ -17,7 +17,7 @@ final class POSupplierService
         private POCalculationService $calculationService
     ) {}
 
-    public function confirmPO(string $poId, array $items, ?string $userId = null): PurchaseOrder
+    public function confirmPO(string $poId, array $items, ?string $invoiceNumber = null, ?string $userId = null): PurchaseOrder
     {
         DB::beginTransaction();
 
@@ -32,21 +32,33 @@ final class POSupplierService
                 throw new Exception('PO must be in TERKIRIM status');
             }
 
+            $hasPriceChanges = false;
+
             foreach ($items as $itemData) {
+                // Find item by stock item_id (not PO item id)
                 $item = PurchaseOrderItem::where('purchase_order_id', $po->id)
-                    ->where('id', $itemData['item_id'])
+                    ->where('item_id', $itemData['itemId'])
                     ->first();
 
                 if (!$item) {
                     throw new Exception('Item not found');
                 }
 
+                // Check if price changed
+                if ((float) $itemData['actualPrice'] !== (float) $item->estimated_unit_price) {
+                    $hasPriceChanges = true;
+                }
+
+                // Update actual price and calculate actual qty and subtotal
+                // Use estimated_qty as actual_qty since supplier doesn't provide it
+                $actualQty = $item->estimated_qty;
+
                 $item->update([
-                    'actual_unit_price' => $itemData['actual_unit_price'],
-                    'actual_qty' => $itemData['actual_qty'],
+                    'actual_unit_price' => $itemData['actualPrice'],
+                    'actual_qty' => $actualQty,
                     'actual_subtotal' => $this->calculationService->calculateItemSubtotal(
-                        $itemData['actual_unit_price'],
-                        $itemData['actual_qty']
+                        $itemData['actualPrice'],
+                        $actualQty
                     ),
                 ]);
             }
@@ -55,14 +67,30 @@ final class POSupplierService
                 $po->items->toArray()
             );
 
-            $po->update(['actual_total' => $actualTotal]);
+            // Update PO with actual total and invoice number
+            $po->update([
+                'actual_total' => $actualTotal,
+                'invoice_number' => $invoiceNumber,
+            ]);
 
-            $this->statusService->transitionStatus(
-                $po,
-                POStatusEnum::DIKONFIRMASI_SUPPLIER,
-                'Supplier confirmed PO',
-                $userId
-            );
+            // Transition status based on price changes
+            if ($hasPriceChanges) {
+                // Price changed: needs koperasi review
+                $this->statusService->transitionStatus(
+                    $po,
+                    POStatusEnum::PERUBAHAN_HARGA,
+                    'Supplier confirmed with price changes, awaiting koperasi review',
+                    $userId
+                );
+            } else {
+                // No price changes: direct confirmation
+                $this->statusService->transitionStatus(
+                    $po,
+                    POStatusEnum::DIKONFIRMASI_SUPPLIER,
+                    'Supplier confirmed PO',
+                    $userId
+                );
+            }
 
             DB::commit();
 

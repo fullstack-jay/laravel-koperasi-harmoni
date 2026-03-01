@@ -19,9 +19,9 @@ final class POSupplierController extends POBaseController
 
     /**
      * @OA\Post(
-     *     path="/PurchaseOrders/{po}/supplier/confirm",
-     *     summary="Supplier confirms PO",
-     *     description="Supplier confirms purchase order with final prices and quantities",
+     *     path="/PurchaseOrders/{po}/Supplier/Confirm",
+     *     summary="Supplier confirms PO with prices",
+     *     description="Supplier confirms purchase order by providing actual prices and invoice number",
      *     tags={"Purchase Orders"},
      *
      *     @OA\Parameter(
@@ -42,12 +42,12 @@ final class POSupplierController extends POBaseController
      *             @OA\Schema(
      *                 required={"items"},
      *
+     *                 @OA\Property(property="invoiceNumber", type="string", example="INV-2026-001"),
      *                 @OA\Property(property="items", type="array", @OA\Items(
      *                     type="object",
-     *                     required={"item_id", "confirmed_qty", "confirmed_unit_price"},
-     *                     @OA\Property(property="item_id", type="string", format="uuid"),
-     *                     @OA\Property(property="confirmed_qty", type="integer"),
-     *                     @OA\Property(property="confirmed_unit_price", type="number", format="float")
+     *                     required={"itemId", "actualPrice"},
+     *                     @OA\Property(property="itemId", type="string", format="uuid", description="Stock Item ID"),
+     *                     @OA\Property(property="actualPrice", type="number", format="float", example=15000)
      *                 ))
      *             )
      *         )
@@ -70,6 +70,7 @@ final class POSupplierController extends POBaseController
             $result = $this->supplierService->confirmPO(
                 $po->id,
                 $request->items,
+                $request->invoiceNumber,
                 $request->user_id
             );
 
@@ -84,7 +85,7 @@ final class POSupplierController extends POBaseController
 
     /**
      * @OA\Post(
-     *     path="/PurchaseOrders/{po}/supplier/reject",
+     *     path="/PurchaseOrders/{po}/Supplier/Reject",
      *     summary="Supplier rejects PO",
      *     description="Supplier rejects purchase order with reason",
      *     tags={"Purchase Orders"},

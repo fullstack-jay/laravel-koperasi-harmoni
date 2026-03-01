@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrder;
 use Modules\V1\PurchaseOrder\Resources\POResource;
 use Modules\V1\PurchaseOrder\Service\POKoperasiService;
+use Modules\V1\PurchaseOrder\Service\POKoperasiReviewService;
 use Modules\V1\PurchaseOrder\Service\POService;
 use Shared\Helpers\ResponseHelper;
 
@@ -16,12 +17,13 @@ final class POKoperasiController extends POBaseController
 {
     public function __construct(
         private POKoperasiService $koperasiService,
-        private POService $poService
+        private POService $poService,
+        private POKoperasiReviewService $reviewService
     ) {}
 
     /**
      * @OA\Post(
-     *     path="/PurchaseOrders/{po}/koperasi/confirm",
+     *     path="/PurchaseOrders/{po}/Koperasi/Confirm",
      *     summary="Koperasi confirms supplier response",
      *     description="Koperasi confirms supplier's price/quantity confirmation",
      *     tags={"Purchase Orders"},
@@ -63,9 +65,9 @@ final class POKoperasiController extends POBaseController
 
     /**
      * @OA\Post(
-     *     path="/PurchaseOrders/{po}/koperasi/reject",
-     *     summary="Koperasi rejects supplier response",
-     *     description="Koperasi rejects supplier's price/quantity confirmation",
+     *     path="/PurchaseOrders/{po}/Koperasi/Reject",
+     *     summary="Koperasi rejects PO",
+     *     description="Koperasi rejects supplier's response or price change request",
      *     tags={"Purchase Orders"},
      *
      *     @OA\Parameter(
@@ -93,7 +95,7 @@ final class POKoperasiController extends POBaseController
      *
      *     @OA\Response(
      *         response=200,
-     *         description="Supplier response rejected successfully"
+     *         description="PO rejected successfully"
      *     ),
      *     security={
      *         {"bearerAuth": {}}
@@ -111,7 +113,7 @@ final class POKoperasiController extends POBaseController
 
             return ResponseHelper::success(
                 data: new POResource($result),
-                message: 'Supplier response rejected successfully'
+                message: 'PO rejected successfully'
             );
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage());
@@ -120,7 +122,7 @@ final class POKoperasiController extends POBaseController
 
     /**
      * @OA\Post(
-     *     path="/PurchaseOrders/{po}/koperasi/receive",
+     *     path="/PurchaseOrders/{po}/Koperasi/Receive",
      *     summary="Receive goods from PO",
      *     description="Receive goods from supplier, create stock batches, and record purchase transaction",
      *     tags={"Purchase Orders"},
@@ -178,6 +180,117 @@ final class POKoperasiController extends POBaseController
                     'batch_number' => $result['batch_number'],
                 ],
                 message: 'Goods received successfully'
+            );
+        } catch (Exception $e) {
+            return ResponseHelper::error($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/PurchaseOrders/{po}/Koperasi/Review/Approve",
+     *     summary="Koperasi approves price change",
+     *     description="Koperasi approves the price changes proposed by supplier",
+     *     tags={"Purchase Orders"},
+     *
+     *     @OA\Parameter(
+     *         name="po",
+     *         in="path",
+     *         required=true,
+     *         description="Purchase Order UUID",
+     *
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Price change approved successfully"
+     *     ),
+     *     security={
+     *         {"bearerAuth": {}}
+     *     }
+     * )
+     */
+    public function approvePriceChange(Request $request, PurchaseOrder $po)
+    {
+        try {
+            $result = $this->reviewService->approvePriceChange(
+                $po->id,
+                $request->user()?->id
+            );
+
+            return ResponseHelper::success(
+                data: new POResource($result),
+                message: 'Price change approved successfully'
+            );
+        } catch (Exception $e) {
+            return ResponseHelper::error($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/PurchaseOrders/{po}/Koperasi/Review/EditAndResend",
+     *     summary="Koperasi edits PO and resends to supplier",
+     *     description="Koperasi modifies items/quantities and resends PO to supplier for confirmation",
+     *     tags={"Purchase Orders"},
+     *
+     *     @OA\Parameter(
+     *         name="po",
+     *         in="path",
+     *         required=true,
+     *         description="Purchase Order UUID",
+     *
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *
+     *             @OA\Schema(
+     *                 required={"items"},
+     *
+     *                 @OA\Property(property="notes", type="string", example="Updated item list"),
+     *                 @OA\Property(property="items", type="array", @OA\Items(
+     *                     type="object",
+     *                     required={"item_id", "estimated_unit_price", "estimated_qty"},
+     *                     @OA\Property(property="item_id", type="string", format="uuid"),
+     *                     @OA\Property(property="estimated_unit_price", type="number", format="float"),
+     *                     @OA\Property(property="estimated_qty", type="integer"),
+     *                     @OA\Property(property="notes", type="string", nullable=true)
+     *                 )),
+     *                 @OA\Property(property="remove_items", type="array", @OA\Items(
+     *                     type="string",
+     *                     format="uuid"
+     *                 ), description="List of item IDs to remove")
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="PO edited and resent successfully"
+     *     ),
+     *     security={
+     *         {"bearerAuth": {}}
+     *     }
+     * )
+     */
+    public function editAndResend(Request $request, PurchaseOrder $po)
+    {
+        try {
+            $result = $this->reviewService->editAndResend(
+                $po->id,
+                $request->all(),
+                $request->user()?->id
+            );
+
+            return ResponseHelper::success(
+                data: new POResource($result),
+                message: 'PO edited and resent to supplier successfully'
             );
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage());

@@ -27,21 +27,27 @@ Route::middleware(['auth:sanctum', 'role:koperasi'])->group(function () {
     // Show specific PO - must come after specific routes
     Route::post('{po}', [POController::class, 'show'])->name('show');
 
-    // Send PO to supplier - must come before {po}/update route
+    // Send PO to supplier - must come before Update route
     Route::post('{po}/Send', [POSendController::class, 'send'])->name('send');
 
     // Update PO
-    Route::post('{po}/update', [POUpdateController::class, 'update'])->name('update');
-
-    // Supplier actions
-    Route::post('{po}/supplier/confirm', [POSupplierController::class, 'confirm'])->name('supplier.confirm');
-    Route::post('{po}/supplier/reject', [POSupplierController::class, 'reject'])->name('supplier.reject');
+    Route::post('Update/{po}', [POUpdateController::class, 'update'])->name('update');
 
     // Koperasi actions
-    Route::post('{po}/koperasi/confirm', [POKoperasiController::class, 'confirmSupplierResponse'])->name('koperasi.confirm');
-    Route::post('{po}/koperasi/reject', [POKoperasiController::class, 'rejectSupplierResponse'])->name('koperasi.reject');
-    Route::post('{po}/koperasi/receive', [POKoperasiController::class, 'receiveGoods'])->name('koperasi.receive');
+    Route::post('{po}/Koperasi/Confirm', [POKoperasiController::class, 'confirmSupplierResponse'])->name('koperasi.confirm');
+    Route::post('{po}/Koperasi/Reject', [POKoperasiController::class, 'rejectSupplierResponse'])->name('koperasi.reject');
+    Route::post('{po}/Koperasi/Receive', [POKoperasiController::class, 'receiveGoods'])->name('koperasi.receive');
+
+    // Koperasi review price change actions
+    Route::post('{po}/Koperasi/Review/Approve', [POKoperasiController::class, 'approvePriceChange'])->name('koperasi.review.approve');
+    Route::post('{po}/Koperasi/Review/EditAndResend', [POKoperasiController::class, 'editAndResend'])->name('koperasi.review.edit-and-resend');
 
     // Cancel PO
     Route::post('{po}/cancel', POCancelController::class)->name('cancel');
+});
+
+Route::middleware(['auth:sanctum', 'role:pemasok'])->group(function () {
+    // Supplier actions
+    Route::post('{po}/Supplier/Confirm', [POSupplierController::class, 'confirm'])->name('supplier.confirm');
+    Route::post('{po}/Supplier/Reject', [POSupplierController::class, 'reject'])->name('supplier.reject');
 });
