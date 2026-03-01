@@ -46,9 +46,8 @@ final class POController extends POBaseController
      *                  type="object",
      *                  @OA\Property(property="id", type="string", format="uuid"),
      *                  @OA\Property(property="poNumber", type="string"),
-     *                  @OA\Property(property="status", type="string", enum={"draft", "terkirim", "perubahan_harga", "dikonfirmasi_supplier", "dikonfirmasi_koperasi", "selesai", "dibatalkan"}),
-     *                  @OA\Property(property="statusLabel", type="string", example="Draft (Dibatalkan)", description="Will show 'Draft (Dibatalkan)' for cancelled draft POs"),
-     *                  @OA\Property(property="isCancelled", type="boolean", example=true, description="True if PO is cancelled (only draft POs can be cancelled)"),
+     *                  @OA\Property(property="status", type="string", enum={"draft", "dibatalkan_draft", "terkirim", "perubahan_harga", "dikonfirmasi_supplier", "dikonfirmasi_koperasi", "selesai", "dibatalkan"}),
+     *                  @OA\Property(property="statusLabel", type="string", example="Draft (Dibatalkan)", description="Status label shows 'Draft (Dibatalkan)' for dibatalkan_draft status"),
      *                  @OA\Property(property="cancellationReason", type="string", nullable=true, example="Budget tidak tersedia")
      *              ))
      *          )
@@ -66,11 +65,11 @@ final class POController extends POBaseController
         $sortColumnDir = $request->input('sortColumnDir', 'desc');
         $search = $request->input('search', '');
 
-        $query = PurchaseOrder::with(['supplier', 'items']);
+        $query = PurchaseOrder::with(['supplier', 'items.stockItem']);
 
-        // By default, exclude cancelled POs (unless explicitly requested)
+        // By default, exclude cancelled draft POs (unless explicitly requested)
         if (!$request->has('includeCancelled') || !$request->boolean('includeCancelled')) {
-            $query->where('is_cancelled', false);
+            $query->where('status', '!=', POStatusEnum::DIBATALKAN_DRAFT->value);
         }
 
         if ($request->has('status')) {
@@ -102,7 +101,7 @@ final class POController extends POBaseController
      * @OA\Post(
      *     path="/PurchaseOrders/{po}",
      *     summary="Get purchase order detail",
-     *     description="Get detailed information about a specific purchase order. For cancelled draft POs, statusLabel will show 'Draft (Dibatalkan)'",
+     *     description="Get detailed information about a specific purchase order. For cancelled draft POs (status: dibatalkan_draft), statusLabel will show 'Draft (Dibatalkan)'",
      *     tags={"Purchase Orders"},
      *
      *     @OA\Parameter(
@@ -124,9 +123,8 @@ final class POController extends POBaseController
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="id", type="string", format="uuid"),
      *                 @OA\Property(property="poNumber", type="string", example="PO-20260302-0001"),
-     *                 @OA\Property(property="status", type="string", example="draft"),
-     *                 @OA\Property(property="statusLabel", type="string", example="Draft (Dibatalkan)", description="Shows 'Draft (Dibatalkan)' for cancelled draft POs"),
-     *                 @OA\Property(property="isCancelled", type="boolean", example=true, description="True if PO is cancelled (only draft POs can be cancelled)"),
+     *                 @OA\Property(property="status", type="string", example="dibatalkan_draft"),
+     *                 @OA\Property(property="statusLabel", type="string", example="Draft (Dibatalkan)", description="Shows 'Draft (Dibatalkan)' for dibatalkan_draft status"),
      *                 @OA\Property(property="cancellationReason", type="string", nullable=true, example="Budget tidak tersedia"),
      *                 @OA\Property(property="estimatedTotal", type="number", format="float"),
      *                 @OA\Property(property="notes", type="string", nullable=true),
@@ -141,7 +139,7 @@ final class POController extends POBaseController
      */
     public function show(PurchaseOrder $po)
     {
-        $po->load(['supplier', 'items', 'statusHistories']);
+        $po->load(['supplier', 'items.stockItem', 'statusHistories']);
 
         return ResponseHelper::success(new POResource($po));
     }

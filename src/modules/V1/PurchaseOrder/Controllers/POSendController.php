@@ -23,14 +23,14 @@ final class POSendController extends POBaseController
      * @OA\Post(
      *     path="/PurchaseOrders/{po}/Send",
      *     summary="Send PO to supplier",
-     *     description="Send purchase order to supplier and notify them. Only DRAFT status POs can be sent. Cancelled POs cannot be sent.",
+     *     description="Send purchase order to supplier and notify them. Only DRAFT status POs can be sent. POs with DIBATALKAN_DRAFT status cannot be sent.",
      *     tags={"Purchase Orders"},
      *
      *     @OA\Parameter(
      *         name="po",
      *         in="path",
      *         required=true,
-     *         description="Purchase Order UUID (must be in DRAFT status and not cancelled)",
+     *         description="Purchase Order UUID (must be in DRAFT status)",
      *
      *         @OA\Schema(type="string", format="uuid")
      *     ),
@@ -47,20 +47,19 @@ final class POSendController extends POBaseController
      *                 @OA\Property(property="id", type="string", format="uuid"),
      *                 @OA\Property(property="poNumber", type="string"),
      *                 @OA\Property(property="status", type="string", example="terkirim"),
-     *                 @OA\Property(property="statusLabel", type="string", example="Terkirim"),
-     *                 @OA\Property(property="isCancelled", type="boolean", example=false)
+     *                 @OA\Property(property="statusLabel", type="string", example="Terkirim")
      *             )
      *         )
      *     ),
      *
      *     @OA\Response(
      *         response=400,
-     *         description="Cannot send PO - Invalid status or already cancelled",
+     *         description="Cannot send PO - Invalid status",
      *
      *         @OA\JsonContent(
      *
      *             @OA\Property(property="status", type="string", example="error"),
-     *             @OA\Property(property="message", type="string", example="Purchase Order yang dibatalkan tidak dapat dikirim.")
+     *             @OA\Property(property="message", type="string", example="Purchase Order tidak dapat dikirim. Status saat ini: Draft (Dibatalkan). Hanya PO dengan status Draft yang dapat dikirim.")
      *         )
      *     ),
      *     security={

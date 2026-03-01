@@ -2146,7 +2146,7 @@
                     "Purchase Orders"
                 ],
                 "summary": "Cancel purchase order",
-                "description": "Cancel a DRAFT purchase order. Only POs with DRAFT status can be cancelled. The status will remain 'draft' but is_cancelled will be set to true.",
+                "description": "Cancel a DRAFT purchase order. Only POs with DRAFT status can be cancelled. The status will change to 'dibatalkan_draft'.",
                 "operationId": "1003d9bd0f27ba767abd2fc311a17a40",
                 "parameters": [
                     {
@@ -2205,19 +2205,14 @@
                                                     "type": "string"
                                                 },
                                                 "status": {
-                                                    "description": "Status remains as 'draft' even after cancellation",
+                                                    "description": "Status changes to 'dibatalkan_draft' after cancellation",
                                                     "type": "string",
-                                                    "example": "draft"
+                                                    "example": "dibatalkan_draft"
                                                 },
                                                 "statusLabel": {
                                                     "description": "Label shows 'Draft (Dibatalkan)' for cancelled POs",
                                                     "type": "string",
                                                     "example": "Draft (Dibatalkan)"
-                                                },
-                                                "isCancelled": {
-                                                    "description": "Set to true when PO is cancelled",
-                                                    "type": "boolean",
-                                                    "example": true
                                                 },
                                                 "cancellationReason": {
                                                     "type": "string",
@@ -2319,6 +2314,7 @@
                                                         "type": "string",
                                                         "enum": [
                                                             "draft",
+                                                            "dibatalkan_draft",
                                                             "terkirim",
                                                             "perubahan_harga",
                                                             "dikonfirmasi_supplier",
@@ -2328,14 +2324,9 @@
                                                         ]
                                                     },
                                                     "statusLabel": {
-                                                        "description": "Will show 'Draft (Dibatalkan)' for cancelled draft POs",
+                                                        "description": "Status label shows 'Draft (Dibatalkan)' for dibatalkan_draft status",
                                                         "type": "string",
                                                         "example": "Draft (Dibatalkan)"
-                                                    },
-                                                    "isCancelled": {
-                                                        "description": "True if PO is cancelled (only draft POs can be cancelled)",
-                                                        "type": "boolean",
-                                                        "example": true
                                                     },
                                                     "cancellationReason": {
                                                         "type": "string",
@@ -2366,7 +2357,7 @@
                     "Purchase Orders"
                 ],
                 "summary": "Get purchase order detail",
-                "description": "Get detailed information about a specific purchase order. For cancelled draft POs, statusLabel will show 'Draft (Dibatalkan)'",
+                "description": "Get detailed information about a specific purchase order. For cancelled draft POs (status: dibatalkan_draft), statusLabel will show 'Draft (Dibatalkan)'",
                 "operationId": "0b0b3be7dfb9211e65ad0d490aacad1d",
                 "parameters": [
                     {
@@ -2403,17 +2394,12 @@
                                                 },
                                                 "status": {
                                                     "type": "string",
-                                                    "example": "draft"
+                                                    "example": "dibatalkan_draft"
                                                 },
                                                 "statusLabel": {
-                                                    "description": "Shows 'Draft (Dibatalkan)' for cancelled draft POs",
+                                                    "description": "Shows 'Draft (Dibatalkan)' for dibatalkan_draft status",
                                                     "type": "string",
                                                     "example": "Draft (Dibatalkan)"
-                                                },
-                                                "isCancelled": {
-                                                    "description": "True if PO is cancelled (only draft POs can be cancelled)",
-                                                    "type": "boolean",
-                                                    "example": true
                                                 },
                                                 "cancellationReason": {
                                                     "type": "string",
@@ -2823,13 +2809,13 @@
                     "Purchase Orders"
                 ],
                 "summary": "Send PO to supplier",
-                "description": "Send purchase order to supplier and notify them. Only DRAFT status POs can be sent. Cancelled POs cannot be sent.",
+                "description": "Send purchase order to supplier and notify them. Only DRAFT status POs can be sent. POs with DIBATALKAN_DRAFT status cannot be sent.",
                 "operationId": "3fd4866b59e9532ed28e7798f927cde3",
                 "parameters": [
                     {
                         "name": "po",
                         "in": "path",
-                        "description": "Purchase Order UUID (must be in DRAFT status and not cancelled)",
+                        "description": "Purchase Order UUID (must be in DRAFT status)",
                         "required": true,
                         "schema": {
                             "type": "string",
@@ -2868,10 +2854,6 @@
                                                 "statusLabel": {
                                                     "type": "string",
                                                     "example": "Terkirim"
-                                                },
-                                                "isCancelled": {
-                                                    "type": "boolean",
-                                                    "example": false
                                                 }
                                             },
                                             "type": "object"
@@ -2883,7 +2865,7 @@
                         }
                     },
                     "400": {
-                        "description": "Cannot send PO - Invalid status or already cancelled",
+                        "description": "Cannot send PO - Invalid status",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2894,7 +2876,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Purchase Order yang dibatalkan tidak dapat dikirim."
+                                            "example": "Purchase Order tidak dapat dikirim. Status saat ini: Draft (Dibatalkan). Hanya PO dengan status Draft yang dapat dikirim."
                                         }
                                     },
                                     "type": "object"
@@ -2916,7 +2898,7 @@
                     "Purchase Orders"
                 ],
                 "summary": "Supplier confirms PO with prices",
-                "description": "Supplier confirms purchase order by providing actual prices and invoice number",
+                "description": "Supplier confirms purchase order by providing actual prices and invoice number. If prices changed, the system will automatically update the buy_price in supplier_items master table and set price_updated_at to current timestamp. PO status will change to PERUBAHAN_HARGA if there are price changes, or DIKONFIRMASI_SUPPLIER if no changes.",
                 "operationId": "ce6a1db56ca7f72813af2610bcfdbc93",
                 "parameters": [
                     {
@@ -2940,6 +2922,7 @@
                                 ],
                                 "properties": {
                                     "invoiceNumber": {
+                                        "description": "Invoice number from supplier",
                                         "type": "string",
                                         "example": "INV-2026-001"
                                     },
@@ -2957,6 +2940,7 @@
                                                     "format": "uuid"
                                                 },
                                                 "actualPrice": {
+                                                    "description": "Actual price from supplier (will update buy_price in supplier_items master if different from estimated price)",
                                                     "type": "number",
                                                     "format": "float",
                                                     "example": 15000
@@ -2973,7 +2957,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "PO confirmed successfully"
+                        "description": "PO confirmed successfully. If prices changed: status=PERUBAHAN_HARGA, buy_price updated in supplier_items, price_updated_at set. If no changes: status=DIKONFIRMASI_SUPPLIER"
                     }
                 },
                 "security": [
@@ -3094,9 +3078,6 @@
                                                 "status": {
                                                     "type": "string",
                                                     "example": "dibatalkan"
-                                                },
-                                                "rejectionReason": {
-                                                    "type": "string"
                                                 },
                                                 "cancellationReason": {
                                                     "type": "string"
@@ -4808,6 +4789,11 @@
                                                         "type": "number",
                                                         "format": "float"
                                                     },
+                                                    "calculatedTotal": {
+                                                        "description": "Total calculated from actualTotal if > 0, otherwise from items (actualPrice * estimatedQty)",
+                                                        "type": "number",
+                                                        "format": "float"
+                                                    },
                                                     "estimatedDeliveryDate": {
                                                         "type": "string",
                                                         "format": "date"
@@ -4994,6 +4980,11 @@
                                                         "format": "float"
                                                     },
                                                     "actualTotal": {
+                                                        "type": "number",
+                                                        "format": "float"
+                                                    },
+                                                    "calculatedTotal": {
+                                                        "description": "Total calculated from items (uses actualPrice if available, otherwise estimatedPrice)",
                                                         "type": "number",
                                                         "format": "float"
                                                     },

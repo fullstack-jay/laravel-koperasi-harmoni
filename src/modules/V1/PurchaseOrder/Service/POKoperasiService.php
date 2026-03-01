@@ -55,7 +55,7 @@ final class POKoperasiService
             throw new Exception('PO must be in DIKONFIRMASI_SUPPLIER or PERUBAHAN_HARGA status');
         }
 
-        $po->update(['rejection_reason' => $reason]);
+        $po->update(['cancellation_reason' => $reason]);
 
         $this->statusService->transitionStatus(
             $po,

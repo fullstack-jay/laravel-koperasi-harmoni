@@ -7,6 +7,7 @@ namespace Modules\V1\PurchaseOrder\Enums;
 enum POStatusEnum: string
 {
     case DRAFT = 'draft';
+    case DIBATALKAN_DRAFT = 'dibatalkan_draft';
     case TERKIRIM = 'terkirim';
     case PERUBAHAN_HARGA = 'perubahan_harga';
     case DIKONFIRMASI_SUPPLIER = 'dikonfirmasi_supplier';
@@ -18,6 +19,7 @@ enum POStatusEnum: string
     {
         return match ($this) {
             self::DRAFT => 'Draft',
+            self::DIBATALKAN_DRAFT => 'Draft (Dibatalkan)',
             self::TERKIRIM => 'Terkirim',
             self::PERUBAHAN_HARGA => 'Perubahan Harga',
             self::DIKONFIRMASI_SUPPLIER => 'Dikonfirmasi Supplier',
@@ -30,7 +32,8 @@ enum POStatusEnum: string
     public function canTransitionTo(POStatusEnum $status): bool
     {
         return match ($this) {
-            self::DRAFT => in_array($status, [self::TERKIRIM, self::DIBATALKAN]),
+            self::DRAFT => in_array($status, [self::TERKIRIM, self::DIBATALKAN_DRAFT]),
+            self::DIBATALKAN_DRAFT => false, // Cannot transition from cancelled draft
             self::TERKIRIM => in_array($status, [self::PERUBAHAN_HARGA, self::DIKONFIRMASI_SUPPLIER, self::DIBATALKAN]),
             self::PERUBAHAN_HARGA => in_array($status, [self::TERKIRIM, self::DIKONFIRMASI_SUPPLIER, self::DIBATALKAN]),
             self::DIKONFIRMASI_SUPPLIER => in_array($status, [self::DIKONFIRMASI_KOPERASI, self::DIBATALKAN]),

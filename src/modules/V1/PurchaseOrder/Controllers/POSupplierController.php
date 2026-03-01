@@ -135,7 +135,6 @@ final class POSupplierController extends POBaseController
      *                 @OA\Property(property="id", type="string", format="uuid"),
      *                 @OA\Property(property="poNumber", type="string"),
      *                 @OA\Property(property="status", type="string", example="dibatalkan"),
-     *                 @OA\Property(property="rejectionReason", type="string"),
      *                 @OA\Property(property="cancellationReason", type="string"),
      *                 @OA\Property(property="cancelledItems", type="array", @OA\Items(
      *                     type="object",

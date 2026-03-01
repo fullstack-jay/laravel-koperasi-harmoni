@@ -18,7 +18,10 @@ class POItemResource extends JsonResource
         return [
             'id' => $this->id,
             'itemId' => $this->item_id,
-            'itemName' => $this->whenLoaded('stockItem', fn() => $this->stockItem->name),
+            'itemName' => $this->when(
+                $this->relationLoaded('stockItem') && $this->stockItem,
+                fn() => $this->stockItem->name
+            ),
             'estimatedUnitPrice' => (float) $this->estimated_unit_price,
             'estimatedQty' => $this->estimated_qty,
             'estimatedSubtotal' => (float) $this->estimated_subtotal,

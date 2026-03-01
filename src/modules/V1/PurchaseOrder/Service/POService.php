@@ -69,17 +69,11 @@ final class POService
             throw new Exception('Purchase Order not found');
         }
 
-        // Validate PO can be sent (must be in DRAFT status and NOT cancelled)
+        // Validate PO can be sent (must be in DRAFT status)
         if ($po->status !== POStatusEnum::DRAFT) {
             throw new Exception(
                 "Purchase Order tidak dapat dikirim. Status saat ini: {$po->status->getLabel()}. " .
                 "Hanya PO dengan status Draft yang dapat dikirim."
-            );
-        }
-
-        if ($po->is_cancelled) {
-            throw new Exception(
-                "Purchase Order yang dibatalkan tidak dapat dikirim."
             );
         }
 
@@ -110,15 +104,17 @@ final class POService
         }
 
         // Check if already cancelled
-        if ($po->is_cancelled) {
+        if ($po->status === POStatusEnum::DIBATALKAN_DRAFT) {
             throw new Exception('PO sudah dibatalkan sebelumnya');
         }
 
-        // Mark as cancelled (status remains DRAFT)
-        $po->update([
-            'is_cancelled' => true,
-            'cancellation_reason' => $reason,
-        ]);
+        // Transition to DIBATALKAN_DRAFT status
+        $this->statusService->transitionStatus(
+            $po,
+            POStatusEnum::DIBATALKAN_DRAFT,
+            $reason,
+            $userId
+        );
 
         return $po->fresh();
     }

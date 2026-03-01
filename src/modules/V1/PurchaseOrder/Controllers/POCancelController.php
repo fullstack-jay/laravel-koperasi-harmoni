@@ -21,7 +21,7 @@ final class POCancelController extends POBaseController
      * @OA\Post(
      *     path="/PurchaseOrders/{po}/cancel",
      *     summary="Cancel purchase order",
-     *     description="Cancel a DRAFT purchase order. Only POs with DRAFT status can be cancelled. The status will remain 'draft' but is_cancelled will be set to true.",
+     *     description="Cancel a DRAFT purchase order. Only POs with DRAFT status can be cancelled. The status will change to 'dibatalkan_draft'.",
      *     tags={"Purchase Orders"},
      *
      *     @OA\Parameter(
@@ -58,9 +58,8 @@ final class POCancelController extends POBaseController
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="id", type="string", format="uuid"),
      *                 @OA\Property(property="poNumber", type="string"),
-     *                 @OA\Property(property="status", type="string", example="draft", description="Status remains as 'draft' even after cancellation"),
+     *                 @OA\Property(property="status", type="string", example="dibatalkan_draft", description="Status changes to 'dibatalkan_draft' after cancellation"),
      *                 @OA\Property(property="statusLabel", type="string", example="Draft (Dibatalkan)", description="Label shows 'Draft (Dibatalkan)' for cancelled POs"),
-     *                 @OA\Property(property="isCancelled", type="boolean", example=true, description="Set to true when PO is cancelled"),
      *                 @OA\Property(property="cancellationReason", type="string", example="Budget tidak tersedia")
      *             )
      *         )

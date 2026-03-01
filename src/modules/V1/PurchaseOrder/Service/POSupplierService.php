@@ -174,7 +174,6 @@ final class POSupplierService
 
             // Update PO with cancellation details
             $po->update([
-                'rejection_reason' => $cancellationReason,
                 'cancellation_reason' => $cancellationReason,
                 'cancelled_items' => $cancelledItems,
             ]);
