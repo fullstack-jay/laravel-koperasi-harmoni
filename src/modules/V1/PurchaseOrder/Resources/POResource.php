@@ -15,6 +15,12 @@ class POResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        // Determine status label with cancelled suffix
+        $statusLabel = $this->status->getLabel();
+        if ($this->is_cancelled && $this->status === \Modules\V1\PurchaseOrder\Enums\POStatusEnum::DRAFT) {
+            $statusLabel = 'Draft (Dibatalkan)';
+        }
+
         return [
             'id' => $this->id,
             'poNumber' => $this->po_number,
@@ -25,7 +31,8 @@ class POResource extends JsonResource
                 'name' => $this->supplier->name,
             ]),
             'status' => $this->status->value,
-            'statusLabel' => $this->status->getLabel(),
+            'statusLabel' => $statusLabel,
+            'isCancelled' => $this->is_cancelled,
             'estimatedTotal' => (float) $this->estimated_total,
             'actualTotal' => $this->actual_total ? (float) $this->actual_total : null,
             'invoiceNumber' => $this->invoice_number,
@@ -33,6 +40,7 @@ class POResource extends JsonResource
             'actualDeliveryDate' => $this->actual_delivery_date?->format('Y-m-d'),
             'notes' => $this->notes,
             'rejectionReason' => $this->rejection_reason,
+            'cancellationReason' => $this->cancellation_reason,
             'sentToSupplierAt' => $this->sent_to_supplier_at?->format('Y-m-d H:i:s'),
             'confirmedBySupplierAt' => $this->confirmed_by_supplier_at?->format('Y-m-d H:i:s'),
             'confirmedByKoperasiAt' => $this->confirmed_by_koperasi_at?->format('Y-m-d H:i:s'),

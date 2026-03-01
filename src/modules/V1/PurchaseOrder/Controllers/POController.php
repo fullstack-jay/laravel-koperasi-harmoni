@@ -15,7 +15,7 @@ final class POController extends POBaseController
      * @OA\Post(
      *      path="/PurchaseOrders/LoadData",
      *      summary="Get all purchase orders",
-     *      description="Returns a paginated list of purchase orders",
+     *      description="Returns a paginated list of purchase orders. By default, cancelled POs are excluded. Use includeCancelled=true to include them.",
      *      tags={"Purchase Orders"},
      *
      *      @OA\RequestBody(
@@ -27,16 +27,31 @@ final class POController extends POBaseController
      *
      *                  @OA\Property(property="pageNumber", type="integer", example=1, description="Page number"),
      *                  @OA\Property(property="pageSize", type="integer", example=10, description="Items per page"),
-     *                  @OA\Property(property="sortDir", type="string", enum={"ASC", "DESC"}, example="ASC", description="Sort direction"),
-     *                  @OA\Property(property="sortDirColumn", type="string", example="id", description="Column to sort by"),
-     *                  @OA\Property(property="search", type="string", example="PO", description="Global search string")
+     *                  @OA\Property(property="sortColumn", type="string", example="id", description="Column to sort by"),
+     *                  @OA\Property(property="sortColumnDir", type="string", enum={"ASC", "DESC"}, example="ASC", description="Sort direction"),
+     *                  @OA\Property(property="search", type="string", example="PO", description="Global search string"),
+     *                  @OA\Property(property="includeCancelled", type="boolean", example=false, description="Include cancelled POs in results. Default: false")
      *              )
      *          )
      *      ),
      *
      *      @OA\Response(
      *          response=200,
-     *          description="Successful operation"
+     *          description="Successful operation",
+     *
+     *          @OA\JsonContent(
+     *
+     *              @OA\Property(property="status", type="string", example="success"),
+     *              @OA\Property(property="data", type="array", @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="id", type="string", format="uuid"),
+     *                  @OA\Property(property="poNumber", type="string"),
+     *                  @OA\Property(property="status", type="string", enum={"draft", "terkirim", "perubahan_harga", "dikonfirmasi_supplier", "dikonfirmasi_koperasi", "selesai", "dibatalkan"}),
+     *                  @OA\Property(property="statusLabel", type="string", example="Draft (Dibatalkan)", description="Will show 'Draft (Dibatalkan)' for cancelled draft POs"),
+     *                  @OA\Property(property="isCancelled", type="boolean", example=true, description="True if PO is cancelled (only draft POs can be cancelled)"),
+     *                  @OA\Property(property="cancellationReason", type="string", nullable=true, example="Budget tidak tersedia")
+     *              ))
+     *          )
      *      ),
      *     security={
      *         {"bearerAuth": {}}
@@ -47,11 +62,16 @@ final class POController extends POBaseController
     {
         $pageNumber = $request->input('pageNumber', 1);
         $pageSize = $request->input('pageSize', 15);
-        $sortDirColumn = $request->input('sortDirColumn', 'created_at');
-        $sortDir = $request->input('sortDir', 'desc');
+        $sortColumn = $request->input('sortColumn', 'created_at');
+        $sortColumnDir = $request->input('sortColumnDir', 'desc');
         $search = $request->input('search', '');
 
         $query = PurchaseOrder::with(['supplier', 'items']);
+
+        // By default, exclude cancelled POs (unless explicitly requested)
+        if (!$request->has('includeCancelled') || !$request->boolean('includeCancelled')) {
+            $query->where('is_cancelled', false);
+        }
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -70,7 +90,7 @@ final class POController extends POBaseController
 
         // Apply sorting and pagination
         $offset = ($pageNumber - 1) * $pageSize;
-        $pos = $query->orderBy($sortDirColumn, $sortDir)
+        $pos = $query->orderBy($sortColumn, $sortColumnDir)
                       ->offset($offset)
                       ->limit($pageSize)
                       ->get();
@@ -82,7 +102,7 @@ final class POController extends POBaseController
      * @OA\Post(
      *     path="/PurchaseOrders/{po}",
      *     summary="Get purchase order detail",
-     *     description="Get detailed information about a specific purchase order",
+     *     description="Get detailed information about a specific purchase order. For cancelled draft POs, statusLabel will show 'Draft (Dibatalkan)'",
      *     tags={"Purchase Orders"},
      *
      *     @OA\Parameter(
@@ -96,7 +116,23 @@ final class POController extends POBaseController
      *
      *     @OA\Response(
      *         response=200,
-     *         description="Successful operation"
+     *         description="Successful operation",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid"),
+     *                 @OA\Property(property="poNumber", type="string", example="PO-20260302-0001"),
+     *                 @OA\Property(property="status", type="string", example="draft"),
+     *                 @OA\Property(property="statusLabel", type="string", example="Draft (Dibatalkan)", description="Shows 'Draft (Dibatalkan)' for cancelled draft POs"),
+     *                 @OA\Property(property="isCancelled", type="boolean", example=true, description="True if PO is cancelled (only draft POs can be cancelled)"),
+     *                 @OA\Property(property="cancellationReason", type="string", nullable=true, example="Budget tidak tersedia"),
+     *                 @OA\Property(property="estimatedTotal", type="number", format="float"),
+     *                 @OA\Property(property="notes", type="string", nullable=true),
+     *                 @OA\Property(property="items", type="array", @OA\Items(type="object"))
+     *             )
+     *         )
      *     ),
      *     security={
      *         {"bearerAuth": {}}

@@ -21,14 +21,14 @@ final class POCancelController extends POBaseController
      * @OA\Post(
      *     path="/PurchaseOrders/{po}/cancel",
      *     summary="Cancel purchase order",
-     *     description="Cancel a purchase order",
+     *     description="Cancel a DRAFT purchase order. Only POs with DRAFT status can be cancelled. The status will remain 'draft' but is_cancelled will be set to true.",
      *     tags={"Purchase Orders"},
      *
      *     @OA\Parameter(
      *         name="po",
      *         in="path",
      *         required=true,
-     *         description="Purchase Order UUID",
+     *         description="Purchase Order UUID (must be in DRAFT status)",
      *
      *         @OA\Schema(type="string", format="uuid")
      *     ),
@@ -42,14 +42,28 @@ final class POCancelController extends POBaseController
      *             @OA\Schema(
      *                 required={"reason"},
      *
-     *                 @OA\Property(property="reason", type="string", example="No longer needed")
+     *                 @OA\Property(property="reason", type="string", example="Budget tidak tersedia", description="Reason for cancellation")
      *             )
      *         )
      *     ),
      *
      *     @OA\Response(
      *         response=200,
-     *         description="PO cancelled successfully"
+     *         description="PO cancelled successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Purchase Order cancelled successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid"),
+     *                 @OA\Property(property="poNumber", type="string"),
+     *                 @OA\Property(property="status", type="string", example="draft", description="Status remains as 'draft' even after cancellation"),
+     *                 @OA\Property(property="statusLabel", type="string", example="Draft (Dibatalkan)", description="Label shows 'Draft (Dibatalkan)' for cancelled POs"),
+     *                 @OA\Property(property="isCancelled", type="boolean", example=true, description="Set to true when PO is cancelled"),
+     *                 @OA\Property(property="cancellationReason", type="string", example="Budget tidak tersedia")
+     *             )
+     *         )
      *     ),
      *     security={
      *         {"bearerAuth": {}}

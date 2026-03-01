@@ -23,26 +23,45 @@ final class POSendController extends POBaseController
      * @OA\Post(
      *     path="/PurchaseOrders/{po}/Send",
      *     summary="Send PO to supplier",
-     *     description="Send purchase order to supplier and notify them",
+     *     description="Send purchase order to supplier and notify them. Only DRAFT status POs can be sent. Cancelled POs cannot be sent.",
      *     tags={"Purchase Orders"},
      *
      *     @OA\Parameter(
      *         name="po",
      *         in="path",
      *         required=true,
-     *         description="Purchase Order UUID",
+     *         description="Purchase Order UUID (must be in DRAFT status and not cancelled)",
      *
      *         @OA\Schema(type="string", format="uuid")
      *     ),
      *
      *     @OA\Response(
      *         response=200,
-     *         description="PO sent successfully"
+     *         description="PO sent successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Purchase Order berhasil dikirim ke 2 supplier user(s)"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid"),
+     *                 @OA\Property(property="poNumber", type="string"),
+     *                 @OA\Property(property="status", type="string", example="terkirim"),
+     *                 @OA\Property(property="statusLabel", type="string", example="Terkirim"),
+     *                 @OA\Property(property="isCancelled", type="boolean", example=false)
+     *             )
+     *         )
      *     ),
      *
      *     @OA\Response(
      *         response=400,
-     *         description="Cannot send PO in current status"
+     *         description="Cannot send PO - Invalid status or already cancelled",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Purchase Order yang dibatalkan tidak dapat dikirim.")
+     *         )
      *     ),
      *     security={
      *         {"bearerAuth": {}}

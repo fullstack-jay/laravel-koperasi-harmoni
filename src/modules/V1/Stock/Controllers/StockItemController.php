@@ -36,8 +36,8 @@ final class StockItemController
      *
      *                  @OA\Property(property="pageNumber", type="integer", example=1, description="Page number"),
      *                  @OA\Property(property="pageSize", type="integer", example=10, description="Items per page"),
-     *                  @OA\Property(property="sortDir", type="string", enum={"ASC", "DESC"}, example="ASC", description="Sort direction"),
-     *                  @OA\Property(property="sortDirColumn", type="string", example="id", description="Column to sort by"),
+     *                  @OA\Property(property="sortColumn", type="string", example="id", description="Column to sort by"),
+     *                  @OA\Property(property="sortColumnDir", type="string", enum={"ASC", "DESC"}, example="ASC", description="Sort direction"),
      *                  @OA\Property(property="search", type="string", example="Beras", description="Global search string"),
      *                  @OA\Property(property="category", type="string", example="BAHAN POKOK", description="Filter by category name (e.g., BAHAN POKOK, PROTEIN HEWANI, etc.)"),
      *                  @OA\Property(property="supplierId", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000", description="Filter by supplier ID (optional)")
@@ -65,8 +65,8 @@ final class StockItemController
         try {
             $pageNumber = $request->input('pageNumber', 1);
             $pageSize = $request->input('pageSize', 15);
-            $sortDirColumn = $request->input('sortDirColumn', 'created_at');
-            $sortDir = $request->input('sortDir', 'desc');
+            $sortColumn = $request->input('sortColumn', 'created_at');
+            $sortColumnDir = $request->input('sortColumnDir', 'desc');
             $search = $request->input('search') ?? '';
             $supplierId = $request->input('supplierId') ?? null;
 
@@ -80,8 +80,8 @@ final class StockItemController
             $items = $this->stockService->getAllItems(
                 pageNumber: $pageNumber,
                 pageSize: $pageSize,
-                sortColumn: $sortDirColumn,
-                sortDir: $sortDir,
+                sortColumn: $sortColumn,
+                sortDir: $sortColumnDir,
                 search: $search,
                 supplierId: $supplierId,
                 categoryCode: $categoryCode

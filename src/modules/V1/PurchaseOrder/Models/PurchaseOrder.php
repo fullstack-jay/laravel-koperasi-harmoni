@@ -21,6 +21,7 @@ class PurchaseOrder extends BaseModel
         'po_date',
         'supplier_id',
         'status',
+        'is_cancelled',
         'estimated_total',
         'confirmed_total',
         'actual_total',
@@ -51,6 +52,7 @@ class PurchaseOrder extends BaseModel
         'confirmed_by_koperasi_at' => 'datetime',
         'received_at' => 'datetime',
         'status' => POStatusEnum::class,
+        'is_cancelled' => 'boolean',
         'cancelled_items' => 'array',
     ];
 

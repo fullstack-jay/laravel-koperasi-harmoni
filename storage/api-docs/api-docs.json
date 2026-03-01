@@ -2146,13 +2146,13 @@
                     "Purchase Orders"
                 ],
                 "summary": "Cancel purchase order",
-                "description": "Cancel a purchase order",
+                "description": "Cancel a DRAFT purchase order. Only POs with DRAFT status can be cancelled. The status will remain 'draft' but is_cancelled will be set to true.",
                 "operationId": "1003d9bd0f27ba767abd2fc311a17a40",
                 "parameters": [
                     {
                         "name": "po",
                         "in": "path",
-                        "description": "Purchase Order UUID",
+                        "description": "Purchase Order UUID (must be in DRAFT status)",
                         "required": true,
                         "schema": {
                             "type": "string",
@@ -2170,8 +2170,9 @@
                                 ],
                                 "properties": {
                                     "reason": {
+                                        "description": "Reason for cancellation",
                                         "type": "string",
-                                        "example": "No longer needed"
+                                        "example": "Budget tidak tersedia"
                                     }
                                 },
                                 "type": "object"
@@ -2181,7 +2182,55 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "PO cancelled successfully"
+                        "description": "PO cancelled successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Purchase Order cancelled successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "poNumber": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "description": "Status remains as 'draft' even after cancellation",
+                                                    "type": "string",
+                                                    "example": "draft"
+                                                },
+                                                "statusLabel": {
+                                                    "description": "Label shows 'Draft (Dibatalkan)' for cancelled POs",
+                                                    "type": "string",
+                                                    "example": "Draft (Dibatalkan)"
+                                                },
+                                                "isCancelled": {
+                                                    "description": "Set to true when PO is cancelled",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "cancellationReason": {
+                                                    "type": "string",
+                                                    "example": "Budget tidak tersedia"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2197,7 +2246,7 @@
                     "Purchase Orders"
                 ],
                 "summary": "Get all purchase orders",
-                "description": "Returns a paginated list of purchase orders",
+                "description": "Returns a paginated list of purchase orders. By default, cancelled POs are excluded. Use includeCancelled=true to include them.",
                 "operationId": "14deb7b1d26a25afdb0f61fbfb73436a",
                 "requestBody": {
                     "content": {
@@ -2214,7 +2263,12 @@
                                         "type": "integer",
                                         "example": 10
                                     },
-                                    "sortDir": {
+                                    "sortColumn": {
+                                        "description": "Column to sort by",
+                                        "type": "string",
+                                        "example": "id"
+                                    },
+                                    "sortColumnDir": {
                                         "description": "Sort direction",
                                         "type": "string",
                                         "enum": [
@@ -2223,15 +2277,15 @@
                                         ],
                                         "example": "ASC"
                                     },
-                                    "sortDirColumn": {
-                                        "description": "Column to sort by",
-                                        "type": "string",
-                                        "example": "id"
-                                    },
                                     "search": {
                                         "description": "Global search string",
                                         "type": "string",
                                         "example": "PO"
+                                    },
+                                    "includeCancelled": {
+                                        "description": "Include cancelled POs in results. Default: false",
+                                        "type": "boolean",
+                                        "example": false
                                     }
                                 },
                                 "type": "object"
@@ -2241,7 +2295,62 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Successful operation"
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid"
+                                                    },
+                                                    "poNumber": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "draft",
+                                                            "terkirim",
+                                                            "perubahan_harga",
+                                                            "dikonfirmasi_supplier",
+                                                            "dikonfirmasi_koperasi",
+                                                            "selesai",
+                                                            "dibatalkan"
+                                                        ]
+                                                    },
+                                                    "statusLabel": {
+                                                        "description": "Will show 'Draft (Dibatalkan)' for cancelled draft POs",
+                                                        "type": "string",
+                                                        "example": "Draft (Dibatalkan)"
+                                                    },
+                                                    "isCancelled": {
+                                                        "description": "True if PO is cancelled (only draft POs can be cancelled)",
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "cancellationReason": {
+                                                        "type": "string",
+                                                        "example": "Budget tidak tersedia",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2257,7 +2366,7 @@
                     "Purchase Orders"
                 ],
                 "summary": "Get purchase order detail",
-                "description": "Get detailed information about a specific purchase order",
+                "description": "Get detailed information about a specific purchase order. For cancelled draft POs, statusLabel will show 'Draft (Dibatalkan)'",
                 "operationId": "0b0b3be7dfb9211e65ad0d490aacad1d",
                 "parameters": [
                     {
@@ -2273,7 +2382,66 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation"
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "poNumber": {
+                                                    "type": "string",
+                                                    "example": "PO-20260302-0001"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "draft"
+                                                },
+                                                "statusLabel": {
+                                                    "description": "Shows 'Draft (Dibatalkan)' for cancelled draft POs",
+                                                    "type": "string",
+                                                    "example": "Draft (Dibatalkan)"
+                                                },
+                                                "isCancelled": {
+                                                    "description": "True if PO is cancelled (only draft POs can be cancelled)",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "cancellationReason": {
+                                                    "type": "string",
+                                                    "example": "Budget tidak tersedia",
+                                                    "nullable": true
+                                                },
+                                                "estimatedTotal": {
+                                                    "type": "number",
+                                                    "format": "float"
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2655,13 +2823,13 @@
                     "Purchase Orders"
                 ],
                 "summary": "Send PO to supplier",
-                "description": "Send purchase order to supplier and notify them",
+                "description": "Send purchase order to supplier and notify them. Only DRAFT status POs can be sent. Cancelled POs cannot be sent.",
                 "operationId": "3fd4866b59e9532ed28e7798f927cde3",
                 "parameters": [
                     {
                         "name": "po",
                         "in": "path",
-                        "description": "Purchase Order UUID",
+                        "description": "Purchase Order UUID (must be in DRAFT status and not cancelled)",
                         "required": true,
                         "schema": {
                             "type": "string",
@@ -2671,10 +2839,68 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "PO sent successfully"
+                        "description": "PO sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Purchase Order berhasil dikirim ke 2 supplier user(s)"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "poNumber": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "terkirim"
+                                                },
+                                                "statusLabel": {
+                                                    "type": "string",
+                                                    "example": "Terkirim"
+                                                },
+                                                "isCancelled": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "400": {
-                        "description": "Cannot send PO in current status"
+                        "description": "Cannot send PO - Invalid status or already cancelled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Purchase Order yang dibatalkan tidak dapat dikirim."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -3597,7 +3823,12 @@
                                         "type": "integer",
                                         "example": 10
                                     },
-                                    "sortDir": {
+                                    "sortColumn": {
+                                        "description": "Column to sort by",
+                                        "type": "string",
+                                        "example": "id"
+                                    },
+                                    "sortColumnDir": {
                                         "description": "Sort direction",
                                         "type": "string",
                                         "enum": [
@@ -3605,11 +3836,6 @@
                                             "DESC"
                                         ],
                                         "example": "ASC"
-                                    },
-                                    "sortDirColumn": {
-                                        "description": "Column to sort by",
-                                        "type": "string",
-                                        "example": "id"
                                     },
                                     "search": {
                                         "description": "Global search string",
