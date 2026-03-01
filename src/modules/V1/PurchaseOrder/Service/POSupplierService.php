@@ -101,27 +101,52 @@ final class POSupplierService
         }
     }
 
-    public function rejectPO(string $poId, string $reason, ?string $userId = null): PurchaseOrder
+    public function rejectPO(string $poId, string $cancellationReason, array $cancelledItems, ?string $userId = null): PurchaseOrder
     {
-        $po = PurchaseOrder::find($poId);
+        DB::beginTransaction();
 
-        if (!$po) {
-            throw new Exception('Purchase Order not found');
+        try {
+            $po = PurchaseOrder::find($poId);
+
+            if (!$po) {
+                throw new Exception('Purchase Order not found');
+            }
+
+            if ($po->status !== POStatusEnum::TERKIRIM) {
+                throw new Exception('PO must be in TERKIRIM status');
+            }
+
+            // Validate cancelled items belong to this PO
+            $poItemIds = PurchaseOrderItem::where('purchase_order_id', $po->id)
+                ->pluck('item_id')
+                ->toArray();
+
+            foreach ($cancelledItems as $item) {
+                if (!in_array($item['itemId'], $poItemIds)) {
+                    throw new Exception('Item ' . $item['itemId'] . ' does not belong to this PO');
+                }
+            }
+
+            // Update PO with cancellation details
+            $po->update([
+                'rejection_reason' => $cancellationReason,
+                'cancellation_reason' => $cancellationReason,
+                'cancelled_items' => $cancelledItems,
+            ]);
+
+            $this->statusService->transitionStatus(
+                $po,
+                POStatusEnum::DIBATALKAN,
+                $cancellationReason,
+                $userId
+            );
+
+            DB::commit();
+
+            return $po->fresh()->load('items');
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-        if ($po->status !== POStatusEnum::TERKIRIM) {
-            throw new Exception('PO must be in TERKIRIM status');
-        }
-
-        $po->update(['rejection_reason' => $reason]);
-
-        $this->statusService->transitionStatus(
-            $po,
-            POStatusEnum::DIBATALKAN,
-            $reason,
-            $userId
-        );
-
-        return $po->fresh();
     }
 }

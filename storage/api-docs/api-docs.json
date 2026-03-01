@@ -2762,8 +2762,8 @@
                 "tags": [
                     "Purchase Orders"
                 ],
-                "summary": "Supplier rejects PO",
-                "description": "Supplier rejects purchase order with reason",
+                "summary": "Supplier rejects PO with detailed cancellation reasons",
+                "description": "Supplier rejects purchase order with detailed reasons and item-level cancellation information",
                 "operationId": "a49f36cc0b836080fd23bc5ffe5d0a35",
                 "parameters": [
                     {
@@ -2783,12 +2783,53 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "reason"
+                                    "cancellationReason",
+                                    "cancelledItems"
                                 ],
                                 "properties": {
-                                    "reason": {
+                                    "cancellationReason": {
                                         "type": "string",
-                                        "example": "Items not available"
+                                        "example": "Mohon maaf, kami tidak dapat memenuhi pesanan untuk item berikut:\\n\\n• Bayam Ikat (qty: 20 pack): Stok tersisa 15 pack\\n• Telur Kampung (qty: 30 pcs): Stok habis, akan kembali tersedia pada 2026-03-10 pukul 08:00\\n\\nMohon dikonfirmasi dan diproses pembatalannya. Terima kasih."
+                                    },
+                                    "cancelledItems": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "itemId",
+                                                "reason",
+                                                "stockType"
+                                            ],
+                                            "properties": {
+                                                "itemId": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "a1321f01-a6a7-4a19-9013-d82b80cb2ffc"
+                                                },
+                                                "reason": {
+                                                    "type": "string",
+                                                    "example": "Stok tersisa 15 pack"
+                                                },
+                                                "stockType": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "remaining",
+                                                        "empty"
+                                                    ],
+                                                    "example": "remaining"
+                                                },
+                                                "quantity": {
+                                                    "description": "Available quantity when stockType is remaining",
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "availableDate": {
+                                                    "description": "Available date when stockType is empty",
+                                                    "type": "string",
+                                                    "example": "2026-03-10 pukul 08:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -2798,7 +2839,74 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "PO rejected successfully"
+                        "description": "PO rejected successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "statusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Purchase Order rejected successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "poNumber": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "dibatalkan"
+                                                },
+                                                "rejectionReason": {
+                                                    "type": "string"
+                                                },
+                                                "cancellationReason": {
+                                                    "type": "string"
+                                                },
+                                                "cancelledItems": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "itemId": {
+                                                                "type": "string",
+                                                                "format": "uuid"
+                                                            },
+                                                            "reason": {
+                                                                "type": "string"
+                                                            },
+                                                            "stockType": {
+                                                                "type": "string"
+                                                            },
+                                                            "quantity": {
+                                                                "type": "integer"
+                                                            },
+                                                            "availableDate": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -4416,7 +4524,21 @@
                                                     },
                                                     "status": {
                                                         "type": "string",
-                                                        "example": "terkirim"
+                                                        "example": "dikonfirmasi_supplier"
+                                                    },
+                                                    "invoiceNumber": {
+                                                        "type": "string",
+                                                        "example": "INV-2026-001",
+                                                        "nullable": true
+                                                    },
+                                                    "koperasiName": {
+                                                        "type": "string",
+                                                        "example": "Koperasi Harmoni"
+                                                    },
+                                                    "koperasiAddress": {
+                                                        "type": "string",
+                                                        "example": "Jl. Contoh No. 123",
+                                                        "nullable": true
                                                     },
                                                     "items": {
                                                         "type": "array",
@@ -4597,6 +4719,15 @@
                                                     "status": {
                                                         "type": "string",
                                                         "example": "terkirim"
+                                                    },
+                                                    "koperasiName": {
+                                                        "type": "string",
+                                                        "example": "Koperasi Harmoni"
+                                                    },
+                                                    "koperasiAddress": {
+                                                        "type": "string",
+                                                        "example": "Jl. Contoh No. 123",
+                                                        "nullable": true
                                                     },
                                                     "items": {
                                                         "type": "array",
@@ -5359,6 +5490,57 @@
                         "description": "The timestamp when the activity log was created.",
                         "type": "string",
                         "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "SupplierRejectRequest": {
+                "title": "Supplier Reject PO Request",
+                "description": "Schema for supplier rejecting purchase order with detailed cancellation reasons",
+                "properties": {
+                    "cancellationReason": {
+                        "type": "string",
+                        "example": "Mohon maaf, kami tidak dapat memenuhi pesanan..."
+                    },
+                    "cancelledItems": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "itemId",
+                                "reason",
+                                "stockType"
+                            ],
+                            "properties": {
+                                "itemId": {
+                                    "description": "Stock Item ID",
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                "reason": {
+                                    "type": "string",
+                                    "example": "Stok tersisa 15 pack"
+                                },
+                                "stockType": {
+                                    "type": "string",
+                                    "enum": [
+                                        "remaining",
+                                        "empty"
+                                    ],
+                                    "example": "remaining"
+                                },
+                                "quantity": {
+                                    "description": "Available quantity when stockType is remaining",
+                                    "type": "integer",
+                                    "example": 15
+                                },
+                                "availableDate": {
+                                    "description": "Available date when stockType is empty",
+                                    "type": "string",
+                                    "example": "2026-03-10 pukul 08:00"
+                                }
+                            },
+                            "type": "object"
+                        }
                     }
                 },
                 "type": "object"

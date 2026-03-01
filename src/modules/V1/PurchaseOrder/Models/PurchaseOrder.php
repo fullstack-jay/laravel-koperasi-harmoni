@@ -29,6 +29,8 @@ class PurchaseOrder extends BaseModel
         'actual_delivery_date',
         'notes',
         'rejection_reason',
+        'cancellation_reason',
+        'cancelled_items',
         'sent_to_supplier_at',
         'confirmed_by_supplier_at',
         'confirmed_by_koperasi_at',
@@ -49,6 +51,7 @@ class PurchaseOrder extends BaseModel
         'confirmed_by_koperasi_at' => 'datetime',
         'received_at' => 'datetime',
         'status' => POStatusEnum::class,
+        'cancelled_items' => 'array',
     ];
 
     public function supplier(): BelongsTo

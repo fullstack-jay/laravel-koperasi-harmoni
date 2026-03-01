@@ -7,6 +7,7 @@ namespace Modules\V1\PurchaseOrder\Controllers;
 use Exception;
 use Illuminate\Http\Request;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrder;
+use Modules\V1\PurchaseOrder\Requests\SupplierRejectRequest;
 use Modules\V1\PurchaseOrder\Resources\POResource;
 use Modules\V1\PurchaseOrder\Service\POSupplierService;
 use Shared\Helpers\ResponseHelper;
@@ -86,8 +87,8 @@ final class POSupplierController extends POBaseController
     /**
      * @OA\Post(
      *     path="/PurchaseOrders/{po}/Supplier/Reject",
-     *     summary="Supplier rejects PO",
-     *     description="Supplier rejects purchase order with reason",
+     *     summary="Supplier rejects PO with detailed cancellation reasons",
+     *     description="Supplier rejects purchase order with detailed reasons and item-level cancellation information",
      *     tags={"Purchase Orders"},
      *
      *     @OA\Parameter(
@@ -106,28 +107,59 @@ final class POSupplierController extends POBaseController
      *             mediaType="application/json",
      *
      *             @OA\Schema(
-     *                 required={"reason"},
+     *                 required={"cancellationReason", "cancelledItems"},
      *
-     *                 @OA\Property(property="reason", type="string", example="Items not available")
+     *                 @OA\Property(property="cancellationReason", type="string", example="Mohon maaf, kami tidak dapat memenuhi pesanan untuk item berikut:\n\n• Bayam Ikat (qty: 20 pack): Stok tersisa 15 pack\n• Telur Kampung (qty: 30 pcs): Stok habis, akan kembali tersedia pada 2026-03-10 pukul 08:00\n\nMohon dikonfirmasi dan diproses pembatalannya. Terima kasih."),
+     *                 @OA\Property(property="cancelledItems", type="array", @OA\Items(
+     *                     type="object",
+     *                     required={"itemId", "reason", "stockType"},
+     *                     @OA\Property(property="itemId", type="string", format="uuid", example="a1321f01-a6a7-4a19-9013-d82b80cb2ffc"),
+     *                     @OA\Property(property="reason", type="string", example="Stok tersisa 15 pack"),
+     *                     @OA\Property(property="stockType", type="string", enum={"remaining", "empty"}, example="remaining"),
+     *                     @OA\Property(property="quantity", type="integer", example=15, description="Available quantity when stockType is remaining"),
+     *                     @OA\Property(property="availableDate", type="string", example="2026-03-10 pukul 08:00", description="Available date when stockType is empty")
+     *                 ))
      *             )
      *         )
      *     ),
      *
      *     @OA\Response(
      *         response=200,
-     *         description="PO rejected successfully"
+     *         description="PO rejected successfully",
+     *
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="statusCode", type="integer", example=200),
+     *             @OA\Property(property="message", type="string", example="Purchase Order rejected successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid"),
+     *                 @OA\Property(property="poNumber", type="string"),
+     *                 @OA\Property(property="status", type="string", example="dibatalkan"),
+     *                 @OA\Property(property="rejectionReason", type="string"),
+     *                 @OA\Property(property="cancellationReason", type="string"),
+     *                 @OA\Property(property="cancelledItems", type="array", @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="itemId", type="string", format="uuid"),
+     *                     @OA\Property(property="reason", type="string"),
+     *                     @OA\Property(property="stockType", type="string"),
+     *                     @OA\Property(property="quantity", type="integer"),
+     *                     @OA\Property(property="availableDate", type="string")
+     *                 ))
+     *             )
+     *         )
      *     ),
      *     security={
      *         {"bearerAuth": {}}
      *     }
      * )
      */
-    public function reject(Request $request, PurchaseOrder $po)
+    public function reject(SupplierRejectRequest $request, PurchaseOrder $po)
     {
         try {
             $result = $this->supplierService->rejectPO(
                 $po->id,
-                $request->reason,
+                $request->cancellationReason,
+                $request->cancelledItems,
                 $request->user()?->id
             );
 
