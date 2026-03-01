@@ -22,7 +22,7 @@ final class POSupplierController extends POBaseController
      * @OA\Post(
      *     path="/PurchaseOrders/{po}/Supplier/Confirm",
      *     summary="Supplier confirms PO with prices",
-     *     description="Supplier confirms purchase order by providing actual prices and invoice number",
+     *     description="Supplier confirms purchase order by providing actual prices and invoice number. If prices changed, the system will automatically update the buy_price in supplier_items master table and set price_updated_at to current timestamp. PO status will change to PERUBAHAN_HARGA if there are price changes, or DIKONFIRMASI_SUPPLIER if no changes.",
      *     tags={"Purchase Orders"},
      *
      *     @OA\Parameter(
@@ -43,12 +43,12 @@ final class POSupplierController extends POBaseController
      *             @OA\Schema(
      *                 required={"items"},
      *
-     *                 @OA\Property(property="invoiceNumber", type="string", example="INV-2026-001"),
+     *                 @OA\Property(property="invoiceNumber", type="string", example="INV-2026-001", description="Invoice number from supplier"),
      *                 @OA\Property(property="items", type="array", @OA\Items(
      *                     type="object",
      *                     required={"itemId", "actualPrice"},
      *                     @OA\Property(property="itemId", type="string", format="uuid", description="Stock Item ID"),
-     *                     @OA\Property(property="actualPrice", type="number", format="float", example=15000)
+     *                     @OA\Property(property="actualPrice", type="number", format="float", example=15000, description="Actual price from supplier (will update buy_price in supplier_items master if different from estimated price)")
      *                 ))
      *             )
      *         )
@@ -56,7 +56,7 @@ final class POSupplierController extends POBaseController
      *
      *     @OA\Response(
      *         response=200,
-     *         description="PO confirmed successfully"
+     *         description="PO confirmed successfully. If prices changed: status=PERUBAHAN_HARGA, buy_price updated in supplier_items, price_updated_at set. If no changes: status=DIKONFIRMASI_SUPPLIER"
      *     ),
      *     security={
      *         {"bearerAuth": {}}

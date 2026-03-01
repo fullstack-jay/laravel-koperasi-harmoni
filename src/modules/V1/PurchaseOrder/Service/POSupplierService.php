@@ -76,6 +76,9 @@ final class POSupplierService
             // Transition status based on price changes
             if ($hasPriceChanges) {
                 // Price changed: needs koperasi review
+                // UPDATE: Update harga beli di master supplier items
+                $this->updateSupplierItemPrices($po->id, $items);
+
                 $this->statusService->transitionStatus(
                     $po,
                     POStatusEnum::PERUBAHAN_HARGA,
@@ -98,6 +101,48 @@ final class POSupplierService
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
+        }
+    }
+
+    /**
+     * Update buy_price and price_updated_at in supplier_items master table
+     * when supplier confirms PO with price changes
+     */
+    private function updateSupplierItemPrices(string $poId, array $itemsData): void
+    {
+        $po = PurchaseOrder::find($poId);
+
+        if (!$po) {
+            return;
+        }
+
+        // Get all PO items
+        $poItems = PurchaseOrderItem::where('purchase_order_id', $poId)->get();
+
+        foreach ($poItems as $poItem) {
+            // Find the corresponding item data from request
+            $itemData = collect($itemsData)->firstWhere('itemId', $poItem->item_id);
+
+            if (!$itemData) {
+                continue;
+            }
+
+            // Find stock item to get its code
+            $stockItem = \Modules\V1\Stock\Models\StockItem::find($poItem->item_id);
+
+            if (!$stockItem) {
+                continue;
+            }
+
+            $newPrice = (float) $itemData['actualPrice'];
+
+            // Update supplier_items master table
+            \Modules\V1\Supplier\Models\SupplierItem::where('supplier_id', $po->supplier_id)
+                ->where('code', $stockItem->code)
+                ->update([
+                    'buy_price' => $newPrice,
+                    'price_updated_at' => now(),
+                ]);
         }
     }
 

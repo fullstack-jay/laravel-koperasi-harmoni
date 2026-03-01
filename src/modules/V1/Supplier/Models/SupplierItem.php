@@ -25,6 +25,7 @@ class SupplierItem extends BaseModel
         'max_stock',
         'buy_price',
         'sell_price',
+        'price_updated_at',
         'avg_weight',
         'status',
         'created_by',
@@ -34,6 +35,7 @@ class SupplierItem extends BaseModel
     protected $casts = [
         'buy_price' => 'decimal:2',
         'sell_price' => 'decimal:2',
+        'price_updated_at' => 'datetime',
         'avg_weight' => 'decimal:2',
         'min_stock' => 'integer',
         'max_stock' => 'integer',
