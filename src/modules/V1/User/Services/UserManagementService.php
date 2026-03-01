@@ -6,7 +6,6 @@ namespace Modules\V1\User\Services;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Modules\V1\Admin\Models\Admin;
 use Modules\V1\Admin\Models\AdminRole;
 use Modules\V1\Kitchen\Services\KitchenService;
@@ -91,9 +90,9 @@ class UserManagementService
                 'email' => $data['email'],
             ];
 
-            // Add password if provided
+            // Add password if provided (will be auto-hashed by model cast)
             if (!empty($data['password'])) {
-                $updateData['password'] = Hash::make($data['password']);
+                $updateData['password'] = $data['password'];
             }
 
             // Add supplier_id for supplier roles
@@ -217,7 +216,7 @@ class UserManagementService
             'last_name' => $nameParts['last_name'],
             'username' => $data['username'],
             'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'password' => $data['password'], // Will be auto-hashed by model cast
         ];
 
         // Add supplier_id for ADMIN_PEMASOK role
@@ -252,7 +251,7 @@ class UserManagementService
             'username' => $data['username'],
             'email' => $data['email'],
             'role_id' => $roleEnum->value,
-            'password' => Hash::make($data['password']),
+            'password' => $data['password'], // Will be auto-hashed by model cast
         ];
 
         // Add supplier_id for PEMASOK role

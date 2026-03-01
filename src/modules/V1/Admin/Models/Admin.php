@@ -55,7 +55,8 @@ final class Admin extends Authenticatable implements MustVerifyEmail
     protected function casts()
     {
         return [
-            "super_admin" => 'boolean'
+            'password' => 'hashed',
+            'super_admin' => 'boolean'
         ];
     }
 

@@ -157,7 +157,7 @@ final class UserController extends Controller
         }
 
         $user->update([
-            'password' => Hash::make($request->input('new_password')),
+            'password' => $request->input('new_password'),
         ]);
 
         return ResponseHelper::success('Password changed successfully');
