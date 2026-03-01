@@ -3347,6 +3347,11 @@
                                         "type": "string",
                                         "example": "Beras"
                                     },
+                                    "category": {
+                                        "description": "Filter by category name (e.g., BAHAN POKOK, PROTEIN HEWANI, etc.)",
+                                        "type": "string",
+                                        "example": "BAHAN POKOK"
+                                    },
                                     "supplierId": {
                                         "description": "Filter by supplier ID (optional)",
                                         "type": "string",
@@ -5117,15 +5122,21 @@
                     },
                     "code": {
                         "type": "string",
-                        "example": "STK-001"
+                        "example": "BPO-BRS-PRM-25KG"
                     },
                     "name": {
                         "type": "string",
                         "example": "Beras Premium"
                     },
                     "category": {
+                        "description": "Full category name (translated from code)",
                         "type": "string",
-                        "example": "Sembako"
+                        "example": "Bahan Pokok"
+                    },
+                    "categoryCode": {
+                        "description": "Category abbreviation code from database",
+                        "type": "string",
+                        "example": "BPO"
                     },
                     "unit": {
                         "type": "string",
