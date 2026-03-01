@@ -8,7 +8,7 @@ use Modules\V1\Stock\Controllers\StockAlertController;
 use Modules\V1\Stock\Controllers\StockBatchController;
 use Modules\V1\Stock\Controllers\StockItemController;
 
-Route::middleware(['auth:sanctum', 'role:koperasi'])->group(function (): void {
+Route::middleware(['auth:sanctum', 'role:koperasi,pemasok'])->group(function (): void {
     // Categories
     Route::post('Categories/List', function () {
         return response()->json([

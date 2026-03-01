@@ -81,6 +81,27 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Check if user has a specific role
+     */
+    public function hasRole($role)
+    {
+        if (is_string($role)) {
+            return $this->roles->contains('slug', $role);
+        }
+        return !! $role->intersect($this->roles)->count();
+    }
+
+    /**
+     * Check if user has a specific permission
+     */
+    public function hasPermission($permission)
+    {
+        return $this->roles->flatMap(function ($role) {
+            return $role->permissions;
+        })->contains('slug', $permission);
+    }
+
+    /**
      * Get the currently authenticated user.
      */
     public static function active(): ?\Illuminate\Contracts\Auth\Authenticatable
