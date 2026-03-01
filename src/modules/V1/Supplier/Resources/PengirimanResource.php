@@ -21,6 +21,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property \Illuminate\Support\Carbon $updated_at
  * @property \Illuminate\Database\Eloquent\Collection $items
  * @property \Modules\V1\Supplier\Models\Supplier $supplier
+ * @property \Modules\V1\Admin\Models\Admin $createdBy
  */
 class PengirimanResource extends JsonResource
 {
@@ -39,6 +40,8 @@ class PengirimanResource extends JsonResource
             'supplierName' => $this->supplier?->name ?? '',
             'status' => $this->status->value,
             'invoiceNumber' => $this->invoice_number,
+            'koperasiName' => $this->createdBy?->full_name ?? '',
+            'koperasiAddress' => $this->createdBy?->address,
             'items' => PengirimanItemResource::collection($this->items),
             'estimatedTotal' => (float) $this->estimated_total,
             'actualTotal' => (float) ($this->actual_total ?? 0),

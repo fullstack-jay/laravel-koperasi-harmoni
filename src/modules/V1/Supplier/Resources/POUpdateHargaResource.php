@@ -22,6 +22,8 @@ class POUpdateHargaResource extends JsonResource
             'supplierId' => $this->supplier_id,
             'supplierName' => $this->whenLoaded('supplier', fn() => $this->supplier->name),
             'status' => $this->status->value,
+            'koperasiName' => $this->whenLoaded('createdBy', fn() => $this->createdBy?->full_name ?? ''),
+            'koperasiAddress' => $this->whenLoaded('createdBy', fn() => $this->createdBy?->address),
             'items' => POUpdateHargaItemResource::collection($this->whenLoaded('items')),
             'estimatedTotal' => (float) $this->estimated_total,
             'actualTotal' => $this->actual_total ? (float) $this->actual_total : 0,

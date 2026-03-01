@@ -40,6 +40,9 @@ final class Admin extends Authenticatable implements MustVerifyEmail
         'username',
         'password',
         'supplier_id',
+        'address',
+        'latitude',
+        'longitude',
     ];
 
     /**
@@ -56,8 +59,18 @@ final class Admin extends Authenticatable implements MustVerifyEmail
     {
         return [
             'password' => 'hashed',
-            'super_admin' => 'boolean'
+            'super_admin' => 'boolean',
+            'latitude' => 'decimal:8',
+            'longitude' => 'decimal:8'
         ];
+    }
+
+    /**
+     * Get the admin's full name.
+     */
+    public function getFullNameAttribute(): string
+    {
+        return trim("{$this->first_name} {$this->last_name}");
     }
 
     public function roles()

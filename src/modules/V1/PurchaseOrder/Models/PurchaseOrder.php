@@ -61,6 +61,11 @@ class PurchaseOrder extends BaseModel
         return $this->hasMany(PurchaseOrderItem::class);
     }
 
+    public function createdBy()
+    {
+        return $this->belongsTo(\Modules\V1\Admin\Models\Admin::class, 'created_by');
+    }
+
     public function statusHistories(): HasMany
     {
         return $this->hasMany(POStatusHistory::class);

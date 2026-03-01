@@ -52,7 +52,10 @@ final class SupplierPengirimanController
      *                 @OA\Property(property="poDate", type="string", format="date", example="2026-03-01"),
      *                 @OA\Property(property="supplierId", type="string", format="uuid"),
      *                 @OA\Property(property="supplierName", type="string", example="PT Sumber Pangan Indonesia"),
-     *                 @OA\Property(property="status", type="string", example="terkirim"),
+     *                 @OA\Property(property="status", type="string", example="dikonfirmasi_supplier"),
+     *                 @OA\Property(property="invoiceNumber", type="string", example="INV-2026-001", nullable=true),
+     *                 @OA\Property(property="koperasiName", type="string", example="Koperasi Harmoni"),
+     *                 @OA\Property(property="koperasiAddress", type="string", example="Jl. Contoh No. 123", nullable=true),
      *                 @OA\Property(property="items", type="array", @OA\Items(
      *                     type="object",
      *                     @OA\Property(property="itemId", type="string", format="uuid"),
@@ -115,7 +118,7 @@ final class SupplierPengirimanController
             $search = $validated['search'] ?? '';
 
             // Build query - get POs that are ready for delivery (DIKONFIRMASI_SUPPLIER status only)
-            $query = PurchaseOrder::with(['items.stockItem', 'supplier'])
+            $query = PurchaseOrder::with(['items.stockItem', 'supplier', 'createdBy'])
                 ->where('supplier_id', $supplierId)
                 ->where('status', POStatusEnum::DIKONFIRMASI_SUPPLIER->value);
 

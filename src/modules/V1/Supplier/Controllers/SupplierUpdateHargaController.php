@@ -52,6 +52,8 @@ final class SupplierUpdateHargaController
      *                 @OA\Property(property="supplierId", type="string", format="uuid"),
      *                 @OA\Property(property="supplierName", type="string", example="PT. Sumber Makmur"),
      *                 @OA\Property(property="status", type="string", example="terkirim"),
+     *                 @OA\Property(property="koperasiName", type="string", example="Koperasi Harmoni"),
+     *                 @OA\Property(property="koperasiAddress", type="string", example="Jl. Contoh No. 123", nullable=true),
      *                 @OA\Property(property="items", type="array", @OA\Items(
      *                     type="object",
      *                     @OA\Property(property="itemId", type="string", format="uuid"),
@@ -114,7 +116,7 @@ final class SupplierUpdateHargaController
             $search = $validated['search'] ?? '';
 
             // Build query
-            $query = PurchaseOrder::with(['items.stockItem', 'supplier'])
+            $query = PurchaseOrder::with(['items.stockItem', 'supplier', 'createdBy'])
                 ->where('supplier_id', $supplierId)
                 ->where('status', POStatusEnum::TERKIRIM);
 
