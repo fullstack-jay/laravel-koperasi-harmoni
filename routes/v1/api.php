@@ -37,6 +37,13 @@ Route::middleware(['auth:sanctum'])->prefix('suppliers')->as('suppliers:')->grou
 );
 
 /**
+ * Supplier Update Harga Routes (Capital S)
+ */
+Route::middleware(['auth:sanctum'])->prefix('Suppliers')->as('suppliers.')->group(
+    base_path('routes/v1/suppliers.php'),
+);
+
+/**
  * Stock Routes
  */
 Route::middleware(['auth:sanctum'])->prefix('Stock')->as('stock:')->group(

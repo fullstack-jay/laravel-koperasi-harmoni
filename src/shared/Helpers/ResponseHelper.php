@@ -238,4 +238,42 @@ final class ResponseHelper
             'retryAfter' => $retryAfter,
         ], 429);
     }
+
+    /**
+     * Return a standardized JSON success response for paginated data.
+     *
+     * @param mixed $data The paginated data items.
+     * @param int $total Total number of items.
+     * @param int $perPage Number of items per page.
+     * @param int $currentPage Current page number.
+     * @param string|null $message A custom success message. Defaults to null.
+     * @param int $status HTTP status code for the response. Defaults to 200 (OK).
+     *
+     * @return \Illuminate\Http\JsonResponse JSON response containing the paginated data.
+     */
+    public static function paginate(
+        mixed $data,
+        int $total,
+        int $perPage,
+        int $currentPage,
+        ?string $message = null,
+        int $status = 200
+    ): JsonResponse {
+        $response = [
+            'status' => 'success',
+            'statusCode' => $status,
+            'data' => $data,
+            'meta' => [
+                'total' => $total,
+                'perPage' => $perPage,
+                'currentPage' => $currentPage,
+            ],
+        ];
+
+        if ($message) {
+            $response['message'] = $message;
+        }
+
+        return response()->json($response, $status);
+    }
 }

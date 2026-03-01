@@ -4203,6 +4203,186 @@
                 ]
             }
         },
+        "/Suppliers/UpdateHarga/LoadData": {
+            "post": {
+                "tags": [
+                    "Suppliers"
+                ],
+                "summary": "Load POs for price update",
+                "description": "Get list of purchase orders that are ready for price update by supplier. For supplier role: returns their own POs. For super_admin role: must provide supplierId parameter.",
+                "operationId": "075f3ed308c5e733cba3990a52f6b3ff",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "pageNumber": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "pageSize": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "sortColumn": {
+                                        "type": "string",
+                                        "example": "id"
+                                    },
+                                    "sortColumnDir": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ASC",
+                                            "DESC"
+                                        ],
+                                        "example": "ASC"
+                                    },
+                                    "search": {
+                                        "type": "string",
+                                        "example": ""
+                                    },
+                                    "supplierId": {
+                                        "description": "Required for super_admin role",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "a12ee051-b01a-4e65-bc83-42594da0f757"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid"
+                                                    },
+                                                    "poNumber": {
+                                                        "type": "string",
+                                                        "example": "PO-20260301-0001"
+                                                    },
+                                                    "poDate": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2026-03-01"
+                                                    },
+                                                    "supplierId": {
+                                                        "type": "string",
+                                                        "format": "uuid"
+                                                    },
+                                                    "supplierName": {
+                                                        "type": "string",
+                                                        "example": "PT. Sumber Makmur"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "terkirim"
+                                                    },
+                                                    "items": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "itemId": {
+                                                                    "type": "string",
+                                                                    "format": "uuid"
+                                                                },
+                                                                "itemName": {
+                                                                    "type": "string"
+                                                                },
+                                                                "estimatedQty": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "receivedQty": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "estimatedPrice": {
+                                                                    "type": "number"
+                                                                },
+                                                                "actualPrice": {
+                                                                    "type": "number"
+                                                                },
+                                                                "unit": {
+                                                                    "type": "string"
+                                                                },
+                                                                "notes": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "estimatedTotal": {
+                                                        "type": "number",
+                                                        "format": "float"
+                                                    },
+                                                    "actualTotal": {
+                                                        "type": "number",
+                                                        "format": "float"
+                                                    },
+                                                    "estimatedDeliveryDate": {
+                                                        "type": "string",
+                                                        "format": "date"
+                                                    },
+                                                    "notes": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "createdAt": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "updatedAt": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "perPage": {
+                                                    "type": "integer"
+                                                },
+                                                "currentPage": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/Admin/Users/View/{id}": {
             "post": {
                 "tags": [
@@ -5270,7 +5450,12 @@
                         "type": "integer",
                         "example": 10
                     },
-                    "sortDir": {
+                    "sortColumn": {
+                        "description": "Column to sort by",
+                        "type": "string",
+                        "example": "id"
+                    },
+                    "sortColumnDir": {
                         "description": "Sort direction",
                         "type": "string",
                         "enum": [
@@ -5279,15 +5464,16 @@
                         ],
                         "example": "ASC"
                     },
-                    "sortDirColumn": {
-                        "description": "Column to sort by",
-                        "type": "string",
-                        "example": "id"
-                    },
                     "search": {
                         "description": "Search string",
                         "type": "string",
                         "example": ""
+                    },
+                    "supplierId": {
+                        "description": "Supplier ID (required for super_admin, optional for supplier role)",
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "a12ee051-b01a-4e65-bc83-42594da0f757"
                     }
                 },
                 "type": "object"
