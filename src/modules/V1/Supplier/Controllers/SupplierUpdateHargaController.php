@@ -67,6 +67,7 @@ final class SupplierUpdateHargaController
      *                 )),
      *                 @OA\Property(property="estimatedTotal", type="number", format="float"),
      *                 @OA\Property(property="actualTotal", type="number", format="float"),
+     *                 @OA\Property(property="calculatedTotal", type="number", format="float", description="Total calculated from items (uses actualPrice if available, otherwise estimatedPrice)"),
      *                 @OA\Property(property="estimatedDeliveryDate", type="string", format="date"),
      *                 @OA\Property(property="notes", type="string", nullable=true),
      *                 @OA\Property(property="createdAt", type="string", format="date-time"),

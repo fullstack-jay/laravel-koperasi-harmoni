@@ -26,12 +26,35 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class PengirimanResource extends JsonResource
 {
     /**
+     * Calculate total based on actualTotal or from items
+     * If actualTotal > 0, use actualTotal
+     * Otherwise, calculate from items: sum(actualPrice * estimatedQty)
+     */
+    private function calculateTotal(): float
+    {
+        // Jika actualTotal > 0, gunakan actualTotal
+        if (!empty($this->actual_total) && $this->actual_total > 0) {
+            return (float) $this->actual_total;
+        }
+
+        // Jika actualTotal = 0, hitung dari items
+        $total = 0;
+        foreach ($this->items as $item) {
+            $total += ($item->actual_unit_price * $item->estimated_qty);
+        }
+
+        return (float) $total;
+    }
+
+    /**
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
     {
+        $calculatedTotal = $this->calculateTotal();
+
         return [
             'id' => $this->id,
             'poNumber' => $this->po_number,
@@ -45,6 +68,7 @@ class PengirimanResource extends JsonResource
             'items' => PengirimanItemResource::collection($this->items),
             'estimatedTotal' => (float) $this->estimated_total,
             'actualTotal' => (float) ($this->actual_total ?? 0),
+            'calculatedTotal' => $calculatedTotal,
             'estimatedDeliveryDate' => $this->estimated_delivery_date?->format('Y-m-d'),
             'notes' => $this->notes,
             'createdAt' => $this->created_at->format('Y-m-d H:i:s'),
