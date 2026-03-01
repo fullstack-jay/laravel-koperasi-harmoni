@@ -37,24 +37,35 @@ class CreateStockItemRequest extends FormRequest
             'code' => ['required', 'string', 'max:255', new UniqueStockItemCodeKey],
             'name' => ['required', 'string', 'max:255', 'unique:stock_items,name'],
             'unit' => ['nullable', 'string', 'max:50'],
-            'minStock' => ['required_without:min_stock', 'integer', 'min:0', 'lte:maxStock|max_stock'],
-            'maxStock' => ['required_without:max_stock', 'integer', 'min:0', 'gte:minStock|min_stock'],
-            'buyPrice' => ['required_without:buy_price', 'numeric', 'min:0'],
-            'sellPrice' => ['required_without:sell_price', 'numeric', 'min:0'],
-            'supplierId' => ['required_without:supplier_id', 'uuid', 'exists:suppliers,id'],
-            // Also accept snake_case for backward compatibility
-            'min_stock' => ['required_without:minStock', 'integer', 'min:0', 'lte:maxStock|max_stock'],
-            'max_stock' => ['required_without:maxStock', 'integer', 'min:0', 'gte:minStock|min_stock'],
-            'buy_price' => ['required_without:buyPrice', 'numeric', 'min:0'],
-            'sell_price' => ['required_without:sellPrice', 'numeric', 'min:0'],
-            'supplier_id' => ['required_without:supplierId', 'uuid', 'exists:suppliers,id'],
+            'min_stock' => ['required', 'integer', 'min:0', 'lte:max_stock'],
+            'max_stock' => ['required', 'integer', 'min:0', 'gte:min_stock'],
+            'buy_price' => ['required', 'numeric', 'min:0'],
+            'sell_price' => ['required', 'numeric', 'min:0'],
+            'supplier_id' => ['required', 'uuid', 'exists:suppliers,id'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'min_stock.min' => 'Stok minimum tidak boleh kurang dari 0 atau negatif',
+            'min_stock.integer' => 'Stok minimum harus berupa bilangan bulat',
+            'min_stock.required' => 'Stok minimum wajib diisi',
+            'min_stock.lte' => 'Stok minimum harus kurang dari atau sama dengan stok maximum',
+            'max_stock.min' => 'Stok maximum tidak boleh kurang dari 0 atau negatif',
+            'max_stock.integer' => 'Stok maximum harus berupa bilangan bulat',
+            'max_stock.required' => 'Stok maximum wajib diisi',
+            'max_stock.gte' => 'Stok maximum harus lebih dari atau sama dengan stok minimum',
+            'buy_price.min' => 'Harga beli tidak boleh kurang dari 0 atau negatif',
+            'buy_price.numeric' => 'Harga beli harus berupa angka',
+            'sell_price.min' => 'Harga jual tidak boleh kurang dari 0 atau negatif',
+            'sell_price.numeric' => 'Harga jual harus berupa angka',
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        // Convert camelCase to snake_case for database
-        // Support both camelCase and snake_case input
+        // Normalize all inputs to snake_case before validation
         $converted = [];
 
         // minStock / min_stock

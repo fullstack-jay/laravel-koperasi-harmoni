@@ -10,6 +10,7 @@ use Modules\V1\Stock\Requests\CreateStockItemRequest;
 use Modules\V1\Stock\Requests\UpdateStockItemRequest;
 use Modules\V1\Stock\Resources\StockItemResource;
 use Modules\V1\Stock\Services\StockService;
+use Modules\V1\Stock\Enums\CategoryEnum;
 use Shared\Helpers\ResponseHelper;
 
 final class StockItemController
@@ -38,6 +39,7 @@ final class StockItemController
      *                  @OA\Property(property="sortDir", type="string", enum={"ASC", "DESC"}, example="ASC", description="Sort direction"),
      *                  @OA\Property(property="sortDirColumn", type="string", example="id", description="Column to sort by"),
      *                  @OA\Property(property="search", type="string", example="Beras", description="Global search string"),
+     *                  @OA\Property(property="category", type="string", example="BAHAN POKOK", description="Filter by category name (e.g., BAHAN POKOK, PROTEIN HEWANI, etc.)"),
      *                  @OA\Property(property="supplierId", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000", description="Filter by supplier ID (optional)")
      *              )
      *          )
@@ -68,13 +70,21 @@ final class StockItemController
             $search = $request->input('search') ?? '';
             $supplierId = $request->input('supplierId') ?? null;
 
+            // Convert category name to code if provided
+            $categoryName = $request->input('category');
+            $categoryCode = null;
+            if ($categoryName) {
+                $categoryCode = CategoryEnum::getCodeByFullName($categoryName);
+            }
+
             $items = $this->stockService->getAllItems(
                 pageNumber: $pageNumber,
                 pageSize: $pageSize,
                 sortColumn: $sortDirColumn,
                 sortDir: $sortDir,
                 search: $search,
-                supplierId: $supplierId
+                supplierId: $supplierId,
+                categoryCode: $categoryCode
             );
 
             return ResponseHelper::success(

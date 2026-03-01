@@ -15,24 +15,7 @@ enum CategoryEnum: string
     case BPN = 'BPN';           // Bahan Pendukung
     case KMN = 'KMN';           // Kemasan
 
-    /**
-     * Get full name from abbreviation
-     */
-    public function getFullName(): string
-    {
-        return match($this) {
-            self::BPO => 'Bahan Pokok',
-            self::PHW => 'Protein Hewani',
-            self::PNA => 'Protein Nabati',
-            self::SYR => 'Sayuran',
-            self::BUA => 'Buah',
-            self::BMR => 'Bumbu & Rempah',
-            self::BPN => 'Bahan Pendukung',
-            self::KMN => 'Kemasan',
-        };
-    }
-
-    /**
+     /**
      * Get full name from abbreviation string
      */
     public static function getFullNameByCode(string $code): string
@@ -57,14 +40,37 @@ enum CategoryEnum: string
     public static function getAll(): array
     {
         return [
-            'BPO' => 'Bahan Pokok',
-            'PHW' => 'Protein Hewani',
-            'PNA' => 'Protein Nabati',
-            'SYR' => 'Sayuran',
-            'BUA' => 'Buah',
-            'BMR' => 'Bumbu & Rempah',
-            'BPN' => 'Bahan Pendukung',
-            'KMN' => 'Kemasan',
+            'BPO' => 'BAHAN POKOK',
+            'PHW' => 'PROTEIN HEWANI',
+            'PNA' => 'PROTEIN NABATI',
+            'SYR' => 'SAYURAN',
+            'BUA' => 'BUAH',
+            'BMR' => 'BUMBU & REMPAH',
+            'BPN' => 'BAHAN PENDUKUNG',
+            'KMN' => 'KEMASAN',
         ];
+    }
+
+    /**
+     * Get code from full name (reverse mapping)
+     * Example: "BAHAN POKOK" → "BPO"
+     */
+    public static function getCodeByFullName(string $fullName): ?string
+    {
+        $all = self::getAll();
+
+        // Case-insensitive search
+        foreach ($all as $code => $name) {
+            if (strtoupper($fullName) === strtoupper($name)) {
+                return $code;
+            }
+        }
+
+        // If input is already a code, return it
+        if (array_key_exists(strtoupper($fullName), array_change_key_case(array_combine(array_keys($all), array_keys($all)), CASE_UPPER))) {
+            return strtoupper($fullName);
+        }
+
+        return null;
     }
 }

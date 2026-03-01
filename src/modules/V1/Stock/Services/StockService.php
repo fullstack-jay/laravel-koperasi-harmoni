@@ -83,7 +83,8 @@ class StockService
         string $sortColumn = 'created_at',
         string $sortDir = 'desc',
         string $search = '',
-        ?string $supplierId = null
+        ?string $supplierId = null,
+        ?string $categoryCode = null
     ): Collection {
         $query = StockItem::query();
 
@@ -92,12 +93,25 @@ class StockService
             $query->where('supplier_id', $supplierId);
         }
 
-        // Apply global search
+        // Filter by category code
+        if (!empty($categoryCode)) {
+            $query->where('category', $categoryCode);
+        }
+
+        // Apply global search (including category name search)
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ILIKE', "%{$search}%")
                   ->orWhere('code', 'ILIKE', "%{$search}%")
                   ->orWhere('category', 'ILIKE', "%{$search}%");
+
+                // Search in category full names (translate category names to codes)
+                $categories = \Modules\V1\Stock\Enums\CategoryEnum::getAll();
+                foreach ($categories as $code => $fullName) {
+                    if (stripos($fullName, $search) !== false) {
+                        $q->orWhere('category', $code);
+                    }
+                }
             });
         }
 

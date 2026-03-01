@@ -39,24 +39,33 @@ class UpdateStockItemRequest extends FormRequest
             'name' => ['nullable', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:255'],
             'unit' => ['nullable', 'string', 'max:50'],
-            'minStock' => ['nullable', 'integer', 'min:0', 'lte:maxStock|max_stock'],
-            'maxStock' => ['nullable', 'integer', 'min:0', 'gte:minStock|min_stock'],
-            'buyPrice' => ['nullable', 'numeric', 'min:0'],
-            'sellPrice' => ['nullable', 'numeric', 'min:0'],
-            'supplierId' => ['nullable', 'uuid', 'exists:suppliers,id'],
-            // Also accept snake_case for backward compatibility
-            'min_stock' => ['nullable', 'integer', 'min:0', 'lte:maxStock|max_stock'],
-            'max_stock' => ['nullable', 'integer', 'min:0', 'gte:minStock|min_stock'],
+            'min_stock' => ['nullable', 'integer', 'min:0', 'lte:max_stock'],
+            'max_stock' => ['nullable', 'integer', 'min:0', 'gte:min_stock'],
             'buy_price' => ['nullable', 'numeric', 'min:0'],
             'sell_price' => ['nullable', 'numeric', 'min:0'],
             'supplier_id' => ['nullable', 'uuid', 'exists:suppliers,id'],
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'min_stock.min' => 'Stok minimum tidak boleh kurang dari 0 atau negatif',
+            'min_stock.integer' => 'Stok minimum harus berupa bilangan bulat',
+            'min_stock.lte' => 'Stok minimum harus kurang dari atau sama dengan stok maximum',
+            'max_stock.min' => 'Stok maximum tidak boleh kurang dari 0 atau negatif',
+            'max_stock.integer' => 'Stok maximum harus berupa bilangan bulat',
+            'max_stock.gte' => 'Stok maximum harus lebih dari atau sama dengan stok minimum',
+            'buy_price.min' => 'Harga beli tidak boleh kurang dari 0 atau negatif',
+            'buy_price.numeric' => 'Harga beli harus berupa angka',
+            'sell_price.min' => 'Harga jual tidak boleh kurang dari 0 atau negatif',
+            'sell_price.numeric' => 'Harga jual harus berupa angka',
+        ];
+    }
+
     protected function prepareForValidation(): void
     {
-        // Convert camelCase to snake_case for database
-        // Support both camelCase and snake_case input
+        // Normalize all inputs to snake_case before validation
         $converted = [];
 
         // minStock / min_stock
