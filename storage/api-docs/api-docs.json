@@ -3123,6 +3123,161 @@
                 ]
             }
         },
+        "/PurchaseOrders/{po}/Supplier/Cancel": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Supplier cancels PO",
+                "description": "Supplier cancels purchase order due to stock issues or other reasons",
+                "operationId": "23e2053796d4454b4d6b125b6df4913b",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "poId",
+                                    "cancelItems"
+                                ],
+                                "properties": {
+                                    "poId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "a1339d14-9065-418b-a605-148b33d14a09"
+                                    },
+                                    "cancelItems": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "itemId",
+                                                "itemName",
+                                                "estimatedQty",
+                                                "unit",
+                                                "reason",
+                                                "quantity"
+                                            ],
+                                            "properties": {
+                                                "itemId": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "item-1"
+                                                },
+                                                "itemName": {
+                                                    "type": "string",
+                                                    "example": "Bayam Ikat"
+                                                },
+                                                "estimatedQty": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "unit": {
+                                                    "type": "string",
+                                                    "example": "pack"
+                                                },
+                                                "reason": {
+                                                    "type": "string",
+                                                    "example": "STOK_TERSISA"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "example": "Mohon maaf, untuk PO-001 berikut item yang tidak dapat dipenuhi..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "PO cancelled successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "statusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "PO berhasil dibatalkan"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "poNumber": {
+                                                    "type": "string",
+                                                    "example": "PO-001"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "DIBATALKAN"
+                                                },
+                                                "isCancelled": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "cancelledAt": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-03-02T10:30:00"
+                                                },
+                                                "cancelReason": {
+                                                    "type": "string",
+                                                    "example": "Supplier membatalkan sebagian item"
+                                                },
+                                                "cancelledItems": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/PurchaseOrders/Update/{po}": {
             "post": {
                 "tags": [
@@ -5711,6 +5866,74 @@
                 },
                 "type": "object"
             },
+            "SupplierCancelRequest": {
+                "title": "Supplier Cancel PO Request",
+                "description": "Schema for supplier cancelling purchase order with detailed cancellation information",
+                "required": [
+                    "cancelItems"
+                ],
+                "properties": {
+                    "poId": {
+                        "description": "Purchase Order ID (optional, taken from route parameter)",
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "a1339d14-9065-418b-a605-148b33d14a09"
+                    },
+                    "cancelItems": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "itemId",
+                                "itemName",
+                                "estimatedQty",
+                                "unit",
+                                "reason",
+                                "quantity"
+                            ],
+                            "properties": {
+                                "itemId": {
+                                    "description": "Stock Item ID",
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "example": "item-1"
+                                },
+                                "itemName": {
+                                    "description": "Item name",
+                                    "type": "string",
+                                    "example": "Bayam Ikat"
+                                },
+                                "estimatedQty": {
+                                    "description": "Estimated quantity in PO",
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "unit": {
+                                    "description": "Unit of measurement",
+                                    "type": "string",
+                                    "example": "pack"
+                                },
+                                "reason": {
+                                    "description": "Cancellation reason code (STOK_TERSISA, STOK_HABIS, etc)",
+                                    "type": "string",
+                                    "example": "STOK_TERSISA"
+                                },
+                                "quantity": {
+                                    "description": "Available quantity",
+                                    "type": "integer",
+                                    "example": 5
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "message": {
+                        "description": "Detailed cancellation message",
+                        "type": "string",
+                        "example": "Mohon maaf, untuk PO-001 berikut item yang tidak dapat dipenuhi..."
+                    }
+                },
+                "type": "object"
+            },
             "SupplierRejectRequest": {
                 "title": "Supplier Reject PO Request",
                 "description": "Schema for supplier rejecting purchase order with detailed cancellation reasons",
@@ -6088,15 +6311,15 @@
                         "description": "Last purchase price from completed PO",
                         "type": "number",
                         "format": "decimal",
-                        "nullable": true,
-                        "example": 12500
+                        "example": 12500,
+                        "nullable": true
                     },
                     "lastPriceUpdateAt": {
                         "description": "Last timestamp when buy_price was updated by supplier confirmation",
                         "type": "string",
                         "format": "date-time",
-                        "nullable": true,
-                        "example": "2026-03-02 12:00:00"
+                        "example": "2026-03-02 12:00:00",
+                        "nullable": true
                     },
                     "currentStock": {
                         "type": "integer",

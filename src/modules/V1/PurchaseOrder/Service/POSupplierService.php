@@ -203,4 +203,93 @@ final class POSupplierService
             throw $e;
         }
     }
+
+    public function cancelPO(string $poId, array $cancelItems, ?string $message = null, ?string $userId = null): PurchaseOrder
+    {
+        DB::beginTransaction();
+
+        try {
+            $po = PurchaseOrder::with('items')->find($poId);
+
+            if (!$po) {
+                throw new Exception('Purchase Order not found');
+            }
+
+            if ($po->status !== POStatusEnum::TERKIRIM) {
+                throw new Exception('PO must be in TERKIRIM status to be cancelled');
+            }
+
+            // Validate cancelled items belong to this PO
+            $poItemIds = PurchaseOrderItem::where('purchase_order_id', $po->id)
+                ->pluck('item_id')
+                ->toArray();
+
+            foreach ($cancelItems as $item) {
+                if (!in_array($item['itemId'], $poItemIds)) {
+                    throw new Exception('Item ' . $item['itemId'] . ' does not belong to this PO');
+                }
+            }
+
+            // Build detailed cancellation message
+            $detailedMessage = $message ?? $this->buildCancellationMessage($po->po_number, $cancelItems);
+
+            // Extract just the item IDs for storage
+            $cancelledItemIds = array_column($cancelItems, 'itemId');
+
+            // Update PO with cancellation details
+            $po->update([
+                'cancellation_reason' => $detailedMessage,
+                'cancelled_items' => $cancelItems,
+            ]);
+
+            $this->statusService->transitionStatus(
+                $po,
+                POStatusEnum::DIBATALKAN,
+                $detailedMessage,
+                $userId
+            );
+
+            DB::commit();
+
+            return $po->fresh()->load('items');
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Build detailed cancellation message from cancel items
+     */
+    private function buildCancellationMessage(string $poNumber, array $cancelItems): string
+    {
+        $message = "Mohon maaf, untuk {$poNumber} berikut item yang tidak dapat dipenuhi:\n\n";
+
+        foreach ($cancelItems as $item) {
+            $message .= "• {$item['itemName']} (Qty: {$item['estimatedQty']} {$item['unit']})\n";
+            $message .= "  Alasan: {$this->formatReason($item['reason'], $item)}\n";
+        }
+
+        return $message;
+    }
+
+    /**
+     * Format reason code to human readable text
+     */
+    private function formatReason(string $reasonCode, array $item): string
+    {
+        return match($reasonCode) {
+            'STOK_TERSISA' => "Stok tersisa {$item['quantity']} {$item['unit']}",
+            'STOK_HABIS' => "Stok habis",
+            default => $reasonCode,
+        };
+    }
+
+    /**
+     * Get quantity from item (handle null values)
+     */
+    private function getQuantity(array $item): int
+    {
+        return $item['quantity'] ?? 0;
+    }
 }

@@ -7,6 +7,7 @@ namespace Modules\V1\PurchaseOrder\Controllers;
 use Exception;
 use Illuminate\Http\Request;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrder;
+use Modules\V1\PurchaseOrder\Requests\SupplierCancelRequest;
 use Modules\V1\PurchaseOrder\Requests\SupplierRejectRequest;
 use Modules\V1\PurchaseOrder\Resources\POResource;
 use Modules\V1\PurchaseOrder\Service\POSupplierService;
@@ -165,6 +166,91 @@ final class POSupplierController extends POBaseController
             return ResponseHelper::success(
                 data: new POResource($result),
                 message: 'Purchase Order rejected successfully'
+            );
+        } catch (Exception $e) {
+            return ResponseHelper::error($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/PurchaseOrders/{po}/Supplier/Cancel",
+     *     summary="Supplier cancels PO",
+     *     description="Supplier cancels purchase order due to stock issues or other reasons",
+     *     tags={"Purchase Orders"},
+     *
+     *     @OA\Parameter(
+     *         name="po",
+     *         in="path",
+     *         required=true,
+     *         description="Purchase Order UUID",
+     *
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *
+     *             @OA\Schema(
+     *                 required={"poId", "cancelItems"},
+     *
+     *                 @OA\Property(property="poId", type="string", format="uuid", example="a1339d14-9065-418b-a605-148b33d14a09"),
+     *                 @OA\Property(property="cancelItems", type="array", @OA\Items(
+     *                     type="object",
+     *                     required={"itemId", "itemName", "estimatedQty", "unit", "reason", "quantity"},
+     *                     @OA\Property(property="itemId", type="string", format="uuid", example="item-1"),
+     *                     @OA\Property(property="itemName", type="string", example="Bayam Ikat"),
+     *                     @OA\Property(property="estimatedQty", type="integer", example=10),
+     *                     @OA\Property(property="unit", type="string", example="pack"),
+     *                     @OA\Property(property="reason", type="string", example="STOK_TERSISA"),
+     *                     @OA\Property(property="quantity", type="integer", example=5)
+     *                 )),
+     *                 @OA\Property(property="message", type="string", example="Mohon maaf, untuk PO-001 berikut item yang tidak dapat dipenuhi...")
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="PO cancelled successfully",
+     *
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="statusCode", type="integer", example=200),
+     *             @OA\Property(property="message", type="string", example="PO berhasil dibatalkan"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid"),
+     *                 @OA\Property(property="poNumber", type="string", example="PO-001"),
+     *                 @OA\Property(property="status", type="string", example="DIBATALKAN"),
+     *                 @OA\Property(property="isCancelled", type="boolean", example=true),
+     *                 @OA\Property(property="cancelledAt", type="string", format="date-time", example="2026-03-02T10:30:00"),
+     *                 @OA\Property(property="cancelReason", type="string", example="Supplier membatalkan sebagian item"),
+     *                 @OA\Property(property="cancelledItems", type="array", @OA\Items(type="string"))
+     *             )
+     *         )
+     *     ),
+     *     security={
+     *         {"bearerAuth": {}}
+     *     }
+     * )
+     */
+    public function cancel(SupplierCancelRequest $request, PurchaseOrder $po)
+    {
+        try {
+            // Use PO from route parameter instead of request body
+            $result = $this->supplierService->cancelPO(
+                $po->id,
+                $request->cancelItems,
+                $request->message,
+                $request->user()?->id
+            );
+
+            return ResponseHelper::success(
+                data: new POResource($result),
+                message: 'PO berhasil dibatalkan'
             );
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage());

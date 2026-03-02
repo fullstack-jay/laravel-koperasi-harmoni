@@ -50,4 +50,5 @@ Route::middleware(['auth:sanctum', 'role:pemasok'])->group(function () {
     // Supplier actions
     Route::post('{po}/Supplier/Confirm', [POSupplierController::class, 'confirm'])->name('supplier.confirm');
     Route::post('{po}/Supplier/Reject', [POSupplierController::class, 'reject'])->name('supplier.reject');
+    Route::post('{po}/Supplier/Cancel', [POSupplierController::class, 'cancel'])->name('supplier.cancel');
 });

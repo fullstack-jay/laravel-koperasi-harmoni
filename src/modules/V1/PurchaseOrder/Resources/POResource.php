@@ -33,6 +33,8 @@ class POResource extends JsonResource
             'actualDeliveryDate' => $this->actual_delivery_date?->format('Y-m-d'),
             'notes' => $this->notes,
             'cancellationReason' => $this->cancellation_reason,
+            'isCancelled' => $this->status->value === 'dibatalkan',
+            'cancelledAt' => $this->status->value === 'dibatalkan' ? $this->updated_at?->format('Y-m-d H:i:s') : null,
             'sentToSupplierAt' => $this->sent_to_supplier_at?->format('Y-m-d H:i:s'),
             'confirmedBySupplierAt' => $this->confirmed_by_supplier_at?->format('Y-m-d H:i:s'),
             'confirmedByKoperasiAt' => $this->confirmed_by_koperasi_at?->format('Y-m-d H:i:s'),
