@@ -40,6 +40,7 @@ Route::middleware(['auth:sanctum', 'role:koperasi'])->group(function () {
     Route::post('{po}/Koperasi/Confirm', [POKoperasiController::class, 'confirmSupplierResponse'])->name('koperasi.confirm');
     Route::post('{po}/Koperasi/Reject', [POKoperasiController::class, 'rejectSupplierResponse'])->name('koperasi.reject');
     Route::post('{po}/Koperasi/Receive', [POKoperasiController::class, 'receiveGoods'])->name('koperasi.receive');
+    Route::post('{po}/Koperasi/Cancel', [POKoperasiController::class, 'cancelByKoperasi'])->name('koperasi.cancel');
 
     // Koperasi review price change actions
     Route::post('{po}/Koperasi/Review/Approve', [POKoperasiController::class, 'approvePriceChange'])->name('koperasi.review.approve');

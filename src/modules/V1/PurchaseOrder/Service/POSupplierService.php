@@ -190,7 +190,7 @@ final class POSupplierService
 
             $this->statusService->transitionStatus(
                 $po,
-                POStatusEnum::DIBATALKAN,
+                POStatusEnum::DIBATALKAN_DRAFT,
                 $cancellationReason,
                 $userId
             );
@@ -244,7 +244,7 @@ final class POSupplierService
 
             $this->statusService->transitionStatus(
                 $po,
-                POStatusEnum::DIBATALKAN,
+                POStatusEnum::DIBATALKAN_DRAFT,
                 $detailedMessage,
                 $userId
             );

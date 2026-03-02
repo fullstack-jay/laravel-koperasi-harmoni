@@ -296,4 +296,79 @@ final class POKoperasiController extends POBaseController
             return ResponseHelper::error($e->getMessage());
         }
     }
+
+    /**
+     * @OA\Post(
+     *     path="/PurchaseOrders/{po}/Koperasi/Cancel",
+     *     summary="Koperasi cancels purchase order",
+     *     description="Koperasi cancels a PO. Only POs with 'PERUBAHAN_HARGA' or 'DIBATALKAN_KOPERASI' status can be cancelled. Status will change to 'DIBATALKAN_KOPERASI'. This action only creates a history record, no data deletion occurs.",
+     *     tags={"Purchase Orders"},
+     *
+     *     @OA\Parameter(
+     *         name="po",
+     *         in="path",
+     *         required=true,
+     *         description="Purchase Order UUID (must be in PERUBAHAN_HARGA or DIBATALKAN_KOPERASI status)",
+     *
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *
+     *             @OA\Schema(
+     *                 required={"reason"},
+     *
+     *                 @OA\Property(property="reason", type="string", example="Harga tidak sesuai", description="Reason for cancellation by Koperasi")
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="PO cancelled successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Purchase Order dibatalkan oleh Koperasi"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid"),
+     *                 @OA\Property(property="poNumber", type="string"),
+     *                 @OA\Property(property="status", type="string", example="dibatalkan_koperasi"),
+     *                 @OA\Property(property="statusLabel", type="string", example="Dibatalkan Koperasi"),
+     *                 @OA\Property(property="cancellationReason", type="string", example="Harga tidak sesuai")
+     *             )
+     *         )
+     *     ),
+     *     security={
+     *         {"bearerAuth": {}}
+     *     }
+     * )
+     */
+    public function cancelByKoperasi(Request $request, PurchaseOrder $po)
+    {
+        // Validate request
+        $validated = $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        try {
+            $result = $this->koperasiService->cancelByKoperasi(
+                $po->id,
+                $validated['reason'],
+                $request->user()?->id
+            );
+
+            return ResponseHelper::success(
+                data: new POResource($result),
+                message: 'Purchase Order dibatalkan oleh Koperasi'
+            );
+        } catch (Exception $e) {
+            return ResponseHelper::error($e->getMessage());
+        }
+    }
 }

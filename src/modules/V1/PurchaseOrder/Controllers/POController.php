@@ -22,7 +22,7 @@ final class POController extends POBaseController
      * @OA\Post(
      *      path="/PurchaseOrders/LoadData",
      *      summary="Get all purchase orders",
-     *      description="Returns a paginated list of purchase orders. By default, cancelled POs are excluded. Use includeCancelled=true to include them.",
+     *      description="Returns a paginated list of purchase orders including all statuses (draft, dibatalkan_draft, terkirim, perubahan_harga, dikonfirmasi_supplier, dikonfirmasi_koperasi, selesai, dibatalkan_koperasi).",
      *      tags={"Purchase Orders"},
      *
      *      @OA\RequestBody(
@@ -37,7 +37,8 @@ final class POController extends POBaseController
      *                  @OA\Property(property="sortColumn", type="string", example="id", description="Column to sort by"),
      *                  @OA\Property(property="sortColumnDir", type="string", enum={"ASC", "DESC"}, example="ASC", description="Sort direction"),
      *                  @OA\Property(property="search", type="string", example="PO", description="Global search string"),
-     *                  @OA\Property(property="includeCancelled", type="boolean", example=false, description="Include cancelled POs in results. Default: false")
+     *                  @OA\Property(property="status", type="string", example="draft", description="Filter by status"),
+     *                  @OA\Property(property="supplier_id", type="string", format="uuid", example="uuid", description="Filter by supplier ID")
      *              )
      *          )
      *      ),
@@ -53,8 +54,8 @@ final class POController extends POBaseController
      *                  type="object",
      *                  @OA\Property(property="id", type="string", format="uuid"),
      *                  @OA\Property(property="poNumber", type="string"),
-     *                  @OA\Property(property="status", type="string", enum={"draft", "dibatalkan_draft", "terkirim", "perubahan_harga", "dikonfirmasi_supplier", "dikonfirmasi_koperasi", "selesai", "dibatalkan"}),
-     *                  @OA\Property(property="statusLabel", type="string", example="Draft (Dibatalkan)", description="Status label shows 'Draft (Dibatalkan)' for dibatalkan_draft status"),
+     *                  @OA\Property(property="status", type="string", enum={"draft", "dibatalkan_draft", "terkirim", "perubahan_harga", "dikonfirmasi_supplier", "dikonfirmasi_koperasi", "selesai", "dibatalkan_koperasi"}),
+     *                  @OA\Property(property="statusLabel", type="string", example="Draft (Dibatalkan)", description="Human readable status label"),
      *                  @OA\Property(property="cancellationReason", type="string", nullable=true, example="Budget tidak tersedia")
      *              ))
      *          )
@@ -73,11 +74,6 @@ final class POController extends POBaseController
         $search = $request->input('search', '');
 
         $query = PurchaseOrder::with(['supplier', 'items.stockItem']);
-
-        // By default, exclude cancelled draft POs (unless explicitly requested)
-        if (!$request->has('includeCancelled') || !$request->boolean('includeCancelled')) {
-            $query->where('status', '!=', POStatusEnum::DIBATALKAN_DRAFT->value);
-        }
 
         if ($request->has('status')) {
             $query->where('status', $request->status);

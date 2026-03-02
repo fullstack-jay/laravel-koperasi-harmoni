@@ -59,7 +59,7 @@ final class POKoperasiService
 
         $this->statusService->transitionStatus(
             $po,
-            POStatusEnum::DIBATALKAN,
+            POStatusEnum::DIBATALKAN_DRAFT,
             $reason,
             $userId
         );
@@ -170,5 +170,57 @@ final class POKoperasiService
         }
 
         return "{$prefix}-{$newNumber}";
+    }
+
+    public function cancelByKoperasi(string $poId, string $reason, ?string $userId = null): PurchaseOrder
+    {
+        $po = PurchaseOrder::find($poId);
+
+        if (!$po) {
+            throw new Exception('Purchase Order not found');
+        }
+
+        // Get raw status to avoid enum casting error
+        $statusValue = $po->getAttributes()['status'] ?? null;
+
+        // Koperasi can only cancel POs with status PERUBAHAN_HARGA or DIBATALKAN_KOPERASI
+        $allowedStatuses = [
+            POStatusEnum::PERUBAHAN_HARGA->value,
+            POStatusEnum::DIBATALKAN_KOPERASI->value,
+        ];
+
+        if (!in_array($statusValue, $allowedStatuses)) {
+            throw new Exception(
+                "PO dengan status saat ini tidak dapat dibatalkan oleh Koperasi. " .
+                "Hanya status Perubahan Harga atau Dibatalkan Koperasi yang dapat dibatalkan."
+            );
+        }
+
+        // Store cancellation reason
+        $po->update(['cancellation_reason' => $reason]);
+
+        // Refresh to get correct enum casting
+        $po = $po->fresh();
+
+        // If not already cancelled by koperasi, transition to DIBATALKAN_KOPERASI status
+        // If already DIBATALKAN_KOPERASI, just create history without status change
+        if ($po->status !== POStatusEnum::DIBATALKAN_KOPERASI) {
+            $this->statusService->transitionStatus(
+                $po,
+                POStatusEnum::DIBATALKAN_KOPERASI,
+                $reason,
+                $userId
+            );
+        } else {
+            // Already cancelled by koperasi, just create a history entry
+            $this->statusService->createHistory(
+                $po,
+                $po->status,
+                $reason,
+                $userId
+            );
+        }
+
+        return $po->fresh();
     }
 }

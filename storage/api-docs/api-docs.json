@@ -2879,6 +2879,99 @@
                 ]
             }
         },
+        "/PurchaseOrders/{po}/Koperasi/Cancel": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Koperasi cancels purchase order",
+                "description": "Koperasi cancels a PO. Only POs with 'PERUBAHAN_HARGA' or 'DIBATALKAN_KOPERASI' status can be cancelled. Status will change to 'DIBATALKAN_KOPERASI'. This action only creates a history record, no data deletion occurs.",
+                "operationId": "3a682b96282bf621d6cd556184ac7d76",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID (must be in PERUBAHAN_HARGA or DIBATALKAN_KOPERASI status)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "description": "Reason for cancellation by Koperasi",
+                                        "type": "string",
+                                        "example": "Harga tidak sesuai"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "PO cancelled successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Purchase Order dibatalkan oleh Koperasi"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "poNumber": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "dibatalkan_koperasi"
+                                                },
+                                                "statusLabel": {
+                                                    "type": "string",
+                                                    "example": "Dibatalkan Koperasi"
+                                                },
+                                                "cancellationReason": {
+                                                    "type": "string",
+                                                    "example": "Harga tidak sesuai"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/PurchaseOrders/{po}/Send": {
             "post": {
                 "tags": [

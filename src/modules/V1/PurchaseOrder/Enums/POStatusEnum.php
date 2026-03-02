@@ -13,7 +13,7 @@ enum POStatusEnum: string
     case DIKONFIRMASI_SUPPLIER = 'dikonfirmasi_supplier';
     case DIKONFIRMASI_KOPERASI = 'dikonfirmasi_koperasi';
     case SELESAI = 'selesai';
-    case DIBATALKAN = 'dibatalkan';
+    case DIBATALKAN_KOPERASI = 'dibatalkan_koperasi';
 
     public function getLabel(): string
     {
@@ -25,7 +25,7 @@ enum POStatusEnum: string
             self::DIKONFIRMASI_SUPPLIER => 'Dikonfirmasi Supplier',
             self::DIKONFIRMASI_KOPERASI => 'Dikonfirmasi Koperasi',
             self::SELESAI => 'Selesai',
-            self::DIBATALKAN => 'Dibatalkan',
+            self::DIBATALKAN_KOPERASI => 'Dibatalkan Koperasi',
         };
     }
 
@@ -34,12 +34,12 @@ enum POStatusEnum: string
         return match ($this) {
             self::DRAFT => in_array($status, [self::TERKIRIM, self::DIBATALKAN_DRAFT]),
             self::DIBATALKAN_DRAFT => false, // Cannot transition from cancelled draft
-            self::TERKIRIM => in_array($status, [self::PERUBAHAN_HARGA, self::DIKONFIRMASI_SUPPLIER, self::DIBATALKAN]),
-            self::PERUBAHAN_HARGA => in_array($status, [self::TERKIRIM, self::DIKONFIRMASI_SUPPLIER, self::DIBATALKAN]),
-            self::DIKONFIRMASI_SUPPLIER => in_array($status, [self::DIKONFIRMASI_KOPERASI, self::DIBATALKAN]),
-            self::DIKONFIRMASI_KOPERASI => in_array($status, [self::SELESAI, self::DIBATALKAN]),
+            self::TERKIRIM => in_array($status, [self::PERUBAHAN_HARGA, self::DIKONFIRMASI_SUPPLIER, self::DIBATALKAN_DRAFT]),
+            self::PERUBAHAN_HARGA => in_array($status, [self::TERKIRIM, self::DIKONFIRMASI_SUPPLIER, self::DIBATALKAN_KOPERASI]),
+            self::DIKONFIRMASI_SUPPLIER => in_array($status, [self::DIKONFIRMASI_KOPERASI]),
+            self::DIKONFIRMASI_KOPERASI => in_array($status, [self::SELESAI]),
             self::SELESAI => false,
-            self::DIBATALKAN => false,
+            self::DIBATALKAN_KOPERASI => false, // Cannot transition from cancelled by koperasi
         };
     }
 }

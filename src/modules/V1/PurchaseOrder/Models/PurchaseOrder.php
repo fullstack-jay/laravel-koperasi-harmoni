@@ -75,6 +75,14 @@ class PurchaseOrder extends BaseModel
 
     public function canTransitionTo(POStatusEnum $status): bool
     {
-        return $this->status->canTransitionTo($status);
+        // Get raw status value to avoid enum casting issues
+        $currentStatusValue = $this->getAttributes()['status'] ?? null;
+        $currentStatus = POStatusEnum::tryFrom($currentStatusValue);
+
+        if (!$currentStatus) {
+            return false;
+        }
+
+        return $currentStatus->canTransitionTo($status);
     }
 }
