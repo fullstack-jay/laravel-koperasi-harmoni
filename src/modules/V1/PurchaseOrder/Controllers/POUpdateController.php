@@ -11,6 +11,7 @@ use Modules\V1\PurchaseOrder\Models\PurchaseOrder;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrderItem;
 use Modules\V1\PurchaseOrder\Resources\POResource;
 use Modules\V1\PurchaseOrder\Service\POCalculationService;
+use Modules\V1\Stock\Models\StockItem;
 use Shared\Helpers\ResponseHelper;
 
 final class POUpdateController extends POBaseController
@@ -98,6 +99,11 @@ final class POUpdateController extends POBaseController
 
             $request->merge(['updated_by' => $request->user()?->id]);
 
+            // Validate stock availability if items are provided
+            if ($request->has('items')) {
+                $this->validateStockAvailability($request->items, $po);
+            }
+
             // Map camelCase to snake_case for database
             $poData = [
                 'po_date' => $request->poDate,
@@ -140,6 +146,33 @@ final class POUpdateController extends POBaseController
             );
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Validate stock availability for items
+     * Ensures the requested quantity does not exceed available stock
+     */
+    private function validateStockAvailability(array $items, PurchaseOrder $po): void
+    {
+        foreach ($items as $item) {
+            $stockItem = StockItem::find($item['itemId']);
+
+            if (!$stockItem) {
+                throw new Exception("Item dengan ID {$item['itemId']} tidak ditemukan");
+            }
+
+            $availableStock = $stockItem->current_stock ?? 0;
+            $requestedQty = $item['estimatedQty'] ?? 0;
+
+            // Check if requested quantity exceeds available stock
+            if ($requestedQty > $availableStock) {
+                $errorMessage = "Mohon maaf, untuk {$po->po_number} berikut item yang tidak dapat dipenuhi:\n\n";
+                $errorMessage .= "• {$stockItem->name} (Qty: {$requestedQty})\n";
+                $errorMessage .= "  Alasan: Stok tersisa {$availableStock}";
+
+                throw new Exception($errorMessage);
+            }
         }
     }
 }
