@@ -37,13 +37,6 @@ Schedule::command('activity-logs:cleanup --days=90 --force')
         \Illuminate\Support\Facades\Log::error('Activity logs cleanup failed');
     });
 
-// Process scheduled stock every minute
-Schedule::command('stock:process-scheduled')
-    ->everyMinute()
-    ->description('Process scheduled stock additions when scheduled time is reached')
-    ->onSuccess(function () {
-        \Illuminate\Support\Facades\Log::info('Scheduled stock processing completed');
-    })
-    ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('Scheduled stock processing failed');
-    });
+// Note: Scheduled stock processing is now handled by queue + delayed job
+// instead of a scheduled command running every minute.
+// See: ProcessScheduledStockJob dispatched from POSupplierService

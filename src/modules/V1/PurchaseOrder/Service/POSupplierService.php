@@ -333,6 +333,7 @@ final class POSupplierService
      * Update current_stock in stock_items table from cancelled items
      * This updates the current_stock field with the quantity provided by supplier
      * Also stores scheduled stock info if availableDate is provided
+     * Dispatches a delayed job to process scheduled stock when time comes
      */
     private function updateCurrentStockFromCancelledItems(array $cancelledItems): void
     {
@@ -374,6 +375,17 @@ final class POSupplierService
                 'scheduled_at' => $scheduledAt,
                 'scheduled_processed' => false,
             ]);
+
+            // Dispatch delayed job if scheduled stock exists
+            if ($scheduledAt && $scheduledQuantity > 0 && $scheduledAt->isFuture()) {
+                $delayInSeconds = $scheduledAt->diffInSeconds(now());
+
+                \App\Jobs\ProcessScheduledStockJob::dispatch(
+                    $stockItem->id,
+                    $scheduledQuantity
+                )->delay($scheduledAt)
+                 ->uniqueId("stock_scheduled_{$stockItem->id}");
+            }
         }
     }
 }
