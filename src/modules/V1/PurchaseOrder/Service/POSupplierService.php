@@ -63,6 +63,9 @@ final class POSupplierService
                 ]);
             }
 
+            // Reload items to get updated actual_unit_price values
+            $po->load('items');
+
             $actualTotal = $this->calculationService->calculateActualTotal(
                 $po->items->toArray()
             );

@@ -109,7 +109,7 @@ final class POSupplierController extends POBaseController
      *             @OA\Schema(
      *                 required={"cancellationReason", "cancelledItems"},
      *
-     *                 @OA\Property(property="cancellationReason", type="string", example="Mohon maaf, kami tidak dapat memenuhi pesanan untuk item berikut:\n\n• Bayam Ikat (qty: 20 pack): Stok tersisa 15 pack\n• Telur Kampung (qty: 30 pcs): Stok habis, akan kembali tersedia pada 2026-03-10 pukul 08:00\n\nMohon dikonfirmasi dan diproses pembatalannya. Terima kasih."),
+     *                 @OA\Property(property="cancellationReason", type="string", example="Mohon maaf, kami tidak dapat memenuhi pesanan untuk item berikut:\n\n• Bayam Ikat (qty: 20 pack): Stok tersisa 15 pack\n• Telur Kampung (qty: 30 pcs): Stok habis, akan kembali tersedia pada 2026-03-10 pukul 08:00\n\nMohon dikonfirmasi dan diproses perubahannya. Terima kasih."),
      *                 @OA\Property(property="cancelledItems", type="array", @OA\Items(
      *                     type="object",
      *                     required={"itemId", "reason", "stockType"},
