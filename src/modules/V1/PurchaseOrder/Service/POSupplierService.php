@@ -332,6 +332,7 @@ final class POSupplierService
     /**
      * Update current_stock in stock_items table from cancelled items
      * This updates the current_stock field with the quantity provided by supplier
+     * Also stores scheduled stock info if availableDate is provided
      */
     private function updateCurrentStockFromCancelledItems(array $cancelledItems): void
     {
@@ -342,9 +343,36 @@ final class POSupplierService
                 continue;
             }
 
-            // Update current_stock with quantity from cancelled items
+            // Parse availableDate if exists (format: "04/03/2026 pukul 22:58")
+            $scheduledAt = null;
+            if (isset($item['availableDate']) && !empty($item['availableDate'])) {
+                // Parse Indonesian date format: "04/03/2026 pukul 22:58"
+                $dateString = str_replace(' pukul ', ' ', $item['availableDate']);
+                try {
+                    $scheduledAt = \Carbon\Carbon::createFromFormat('d/m/Y H:i', trim($dateString));
+                } catch (\Exception $e) {
+                    // If parsing fails, try another format or set to null
+                    try {
+                        $scheduledAt = \Carbon\Carbon::parse($item['availableDate']);
+                    } catch (\Exception $e2) {
+                        $scheduledAt = null;
+                    }
+                }
+            }
+
+            // Calculate scheduled quantity (how much will be added)
+            $scheduledQuantity = 0;
+            if ($scheduledAt && isset($item['estimatedQty']) && isset($item['quantity'])) {
+                // scheduled_quantity = estimated_qty - current_available_qty
+                $scheduledQuantity = max(0, $item['estimatedQty'] - $item['quantity']);
+            }
+
+            // Update stock item with current stock and scheduled stock info
             $stockItem->update([
                 'current_stock' => $item['quantity'] ?? 0,
+                'scheduled_quantity' => $scheduledQuantity > 0 ? $scheduledQuantity : null,
+                'scheduled_at' => $scheduledAt,
+                'scheduled_processed' => false,
             ]);
         }
     }

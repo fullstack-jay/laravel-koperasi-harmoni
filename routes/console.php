@@ -36,3 +36,14 @@ Schedule::command('activity-logs:cleanup --days=90 --force')
     ->onFailure(function () {
         \Illuminate\Support\Facades\Log::error('Activity logs cleanup failed');
     });
+
+// Process scheduled stock every minute
+Schedule::command('stock:process-scheduled')
+    ->everyMinute()
+    ->description('Process scheduled stock additions when scheduled time is reached')
+    ->onSuccess(function () {
+        \Illuminate\Support\Facades\Log::info('Scheduled stock processing completed');
+    })
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('Scheduled stock processing failed');
+    });

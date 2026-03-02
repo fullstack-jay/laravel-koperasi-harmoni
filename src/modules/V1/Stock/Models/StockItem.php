@@ -25,6 +25,9 @@ class StockItem extends BaseModel
         'sell_price',
         'last_price_update_at',
         'current_stock',
+        'scheduled_quantity',
+        'scheduled_at',
+        'scheduled_processed',
         'supplier_id',
         'created_by',
         'updated_by',
@@ -37,6 +40,9 @@ class StockItem extends BaseModel
         'min_stock' => 'integer',
         'max_stock' => 'integer',
         'current_stock' => 'integer',
+        'scheduled_quantity' => 'integer',
+        'scheduled_at' => 'datetime',
+        'scheduled_processed' => 'boolean',
     ];
 
     /**
