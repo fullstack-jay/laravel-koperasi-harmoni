@@ -24,19 +24,38 @@ Artisan::command('stock:truncate', function () {
     return 1;
 })->purpose('Truncate the stock_items table');
 
-// Schedule activity logs cleanup every week (Sunday at 2 AM)
-Schedule::command('activity-logs:cleanup --days=90 --force')
-    ->weekly()
-    ->sundays()
-    ->at('02:00')
-    ->description('Clean up activity logs older than 90 days')
-    ->onSuccess(function () {
-        \Illuminate\Support\Facades\Log::info('Activity logs cleanup completed successfully');
-    })
-    ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('Activity logs cleanup failed');
-    });
+// Schedule activity logs cleanup based on .env configuration
+$scheduleType = env('JADWAL_PEMBERSIHAN_LOG', 'daily');
+$scheduleTime = env('WAKTU_PEMBERSIHAN_LOG', '02:00');
+$autoCleanup = env('PEMBERSIHAN_OTOMATIS_LOG', 'true') === 'true';
 
-// Note: Scheduled stock processing is now handled by queue + delayed job
-// instead of a scheduled command running every minute.
-// See: ProcessScheduledStockJob dispatched from POSupplierService
+if ($autoCleanup) {
+    $schedule = Schedule::command('activity-logs:cleanup --force');
+
+    // Set schedule frequency based on .env configuration
+    switch ($scheduleType) {
+        case 'hourly':
+            $schedule->hourly();
+            break;
+        case 'daily':
+            $schedule->daily()->at($scheduleTime);
+            break;
+        case 'weekly':
+            $schedule->weekly()->sundays()->at($scheduleTime);
+            break;
+        case 'monthly':
+            $schedule->monthly()->at($scheduleTime);
+            break;
+        default:
+            $schedule->daily()->at($scheduleTime);
+    }
+
+    $schedule->description("Clean up activity logs ({$scheduleType} at {$scheduleTime})")
+        ->onSuccess(function () {
+            \Illuminate\Support\Facades\Log::info('[Scheduler] Activity logs cleanup completed successfully');
+        })
+        ->onFailure(function () {
+            \Illuminate\Support\Facades\Log::error('[Scheduler] Activity logs cleanup failed');
+        });
+}
+
