@@ -2984,13 +2984,13 @@
                     "Purchase Orders"
                 ],
                 "summary": "Send PO to supplier",
-                "description": "Send purchase order to supplier and notify them. Only DRAFT status POs can be sent. POs with DIBATALKAN_DRAFT status cannot be sent.",
+                "description": "Send purchase order to supplier and notify them. Only DRAFT and DIBATALKAN_DRAFT status POs can be sent.",
                 "operationId": "3fd4866b59e9532ed28e7798f927cde3",
                 "parameters": [
                     {
                         "name": "po",
                         "in": "path",
-                        "description": "Purchase Order UUID (must be in DRAFT status)",
+                        "description": "Purchase Order UUID (must be in DRAFT or DIBATALKAN_DRAFT status)",
                         "required": true,
                         "schema": {
                             "type": "string",
@@ -3051,7 +3051,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Purchase Order tidak dapat dikirim. Status saat ini: Draft (Dibatalkan). Hanya PO dengan status Draft yang dapat dikirim."
+                                            "example": "Purchase Order tidak dapat dikirim. Status saat ini: Selesai. Hanya PO dengan status Draft atau Draft (Dibatalkan) yang dapat dikirim."
                                         }
                                     },
                                     "type": "object"

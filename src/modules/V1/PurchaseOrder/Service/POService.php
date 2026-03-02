@@ -69,11 +69,13 @@ final class POService
             throw new Exception('Purchase Order not found');
         }
 
-        // Validate PO can be sent (must be in DRAFT status)
-        if ($po->status !== POStatusEnum::DRAFT) {
+        // Validate PO can be sent (must be in DRAFT or DIBATALKAN_DRAFT status)
+        $allowedStatuses = [POStatusEnum::DRAFT, POStatusEnum::DIBATALKAN_DRAFT];
+
+        if (!in_array($po->status, $allowedStatuses)) {
             throw new Exception(
                 "Purchase Order tidak dapat dikirim. Status saat ini: {$po->status->getLabel()}. " .
-                "Hanya PO dengan status Draft yang dapat dikirim."
+                "Hanya PO dengan status Draft atau Draft (Dibatalkan) yang dapat dikirim."
             );
         }
 

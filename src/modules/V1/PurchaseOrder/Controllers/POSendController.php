@@ -23,14 +23,14 @@ final class POSendController extends POBaseController
      * @OA\Post(
      *     path="/PurchaseOrders/{po}/Send",
      *     summary="Send PO to supplier",
-     *     description="Send purchase order to supplier and notify them. Only DRAFT status POs can be sent. POs with DIBATALKAN_DRAFT status cannot be sent.",
+     *     description="Send purchase order to supplier and notify them. Only DRAFT and DIBATALKAN_DRAFT status POs can be sent.",
      *     tags={"Purchase Orders"},
      *
      *     @OA\Parameter(
      *         name="po",
      *         in="path",
      *         required=true,
-     *         description="Purchase Order UUID (must be in DRAFT status)",
+     *         description="Purchase Order UUID (must be in DRAFT or DIBATALKAN_DRAFT status)",
      *
      *         @OA\Schema(type="string", format="uuid")
      *     ),
@@ -59,7 +59,7 @@ final class POSendController extends POBaseController
      *         @OA\JsonContent(
      *
      *             @OA\Property(property="status", type="string", example="error"),
-     *             @OA\Property(property="message", type="string", example="Purchase Order tidak dapat dikirim. Status saat ini: Draft (Dibatalkan). Hanya PO dengan status Draft yang dapat dikirim.")
+     *             @OA\Property(property="message", type="string", example="Purchase Order tidak dapat dikirim. Status saat ini: Selesai. Hanya PO dengan status Draft atau Draft (Dibatalkan) yang dapat dikirim.")
      *         )
      *     ),
      *     security={

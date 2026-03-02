@@ -33,7 +33,7 @@ enum POStatusEnum: string
     {
         return match ($this) {
             self::DRAFT => in_array($status, [self::TERKIRIM, self::DIBATALKAN_DRAFT]),
-            self::DIBATALKAN_DRAFT => false, // Cannot transition from cancelled draft
+            self::DIBATALKAN_DRAFT => in_array($status, [self::TERKIRIM]), // Cancelled draft can be re-sent
             self::TERKIRIM => in_array($status, [self::PERUBAHAN_HARGA, self::DIKONFIRMASI_SUPPLIER, self::DIBATALKAN_DRAFT]),
             self::PERUBAHAN_HARGA => in_array($status, [self::TERKIRIM, self::DIKONFIRMASI_SUPPLIER, self::DIBATALKAN_KOPERASI]),
             self::DIKONFIRMASI_SUPPLIER => in_array($status, [self::DIKONFIRMASI_KOPERASI]),
