@@ -6,7 +6,9 @@ namespace Modules\V1\Stock\Services;
 
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Modules\V1\Stock\Models\StockItem;
+use Modules\V1\PurchaseOrder\Models\PurchaseOrderItem;
 
 class StockService
 {
@@ -86,7 +88,19 @@ class StockService
         ?string $supplierId = null,
         ?string $categoryCode = null
     ): Collection {
-        $query = StockItem::query();
+        // Subquery to get the last actual unit price from purchase orders
+        // Include POs with actual price (excluding draft and cancelled statuses)
+        $lastPriceSubquery = PurchaseOrderItem::select('actual_unit_price')
+            ->join('purchase_orders', 'purchase_order_items.purchase_order_id', '=', 'purchase_orders.id')
+            ->whereColumn('purchase_order_items.item_id', 'stock_items.id')
+            ->whereNotNull('purchase_order_items.actual_unit_price')
+            ->whereNotIn('purchase_orders.status', ['draft', 'dibatalkan_draft', 'dibatalkan'])
+            ->orderByDesc('purchase_orders.created_at')
+            ->limit(1)
+            ->getQuery();
+
+        $query = StockItem::query()
+            ->addSelect(['last_purchase_price' => $lastPriceSubquery]);
 
         // Filter by supplier
         if (!empty($supplierId)) {
@@ -129,7 +143,20 @@ class StockService
      */
     public function findItem(string $id): StockItem
     {
-        $item = StockItem::find($id);
+        // Subquery to get the last actual unit price from purchase orders
+        // Include POs with actual price (excluding draft and cancelled statuses)
+        $lastPriceSubquery = PurchaseOrderItem::select('actual_unit_price')
+            ->join('purchase_orders', 'purchase_order_items.purchase_order_id', '=', 'purchase_orders.id')
+            ->whereColumn('purchase_order_items.item_id', 'stock_items.id')
+            ->whereNotNull('purchase_order_items.actual_unit_price')
+            ->whereNotIn('purchase_orders.status', ['draft', 'dibatalkan_draft', 'dibatalkan'])
+            ->orderByDesc('purchase_orders.created_at')
+            ->limit(1)
+            ->getQuery();
+
+        $item = StockItem::select('*', DB::raw('(' . $lastPriceSubquery->toSql() . ') as last_purchase_price'))
+            ->addBinding($lastPriceSubquery->getBindings())
+            ->find($id);
 
         if (! $item) {
             throw new Exception('Stock item not found', 404);

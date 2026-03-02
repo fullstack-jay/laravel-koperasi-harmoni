@@ -6084,6 +6084,20 @@
                         "format": "decimal",
                         "example": 15000
                     },
+                    "actualUnitPrice": {
+                        "description": "Last purchase price from completed PO",
+                        "type": "number",
+                        "format": "decimal",
+                        "nullable": true,
+                        "example": 12500
+                    },
+                    "lastPriceUpdateAt": {
+                        "description": "Last timestamp when buy_price was updated by supplier confirmation",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "example": "2026-03-02 12:00:00"
+                    },
                     "currentStock": {
                         "type": "integer",
                         "example": 500

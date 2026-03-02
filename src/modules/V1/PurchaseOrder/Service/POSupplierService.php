@@ -109,6 +109,7 @@ final class POSupplierService
 
     /**
      * Update buy_price and price_updated_at in supplier_items master table
+     * and update buy_price and last_price_update_at in stock_items master table
      * when supplier confirms PO with price changes
      */
     private function updateSupplierItemPrices(string $poId, array $itemsData): void
@@ -146,6 +147,12 @@ final class POSupplierService
                     'buy_price' => $newPrice,
                     'price_updated_at' => now(),
                 ]);
+
+            // Update stock_items master table with new price and timestamp
+            $stockItem->update([
+                'buy_price' => $newPrice,
+                'last_price_update_at' => now(),
+            ]);
         }
     }
 

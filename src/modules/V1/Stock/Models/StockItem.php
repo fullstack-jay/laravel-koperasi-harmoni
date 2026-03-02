@@ -23,6 +23,7 @@ class StockItem extends BaseModel
         'max_stock',
         'buy_price',
         'sell_price',
+        'last_price_update_at',
         'current_stock',
         'supplier_id',
         'created_by',
@@ -32,6 +33,7 @@ class StockItem extends BaseModel
     protected $casts = [
         'buy_price' => 'decimal:2',
         'sell_price' => 'decimal:2',
+        'last_price_update_at' => 'datetime',
         'min_stock' => 'integer',
         'max_stock' => 'integer',
         'current_stock' => 'integer',

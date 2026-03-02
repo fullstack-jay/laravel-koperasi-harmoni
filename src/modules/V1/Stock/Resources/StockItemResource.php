@@ -24,6 +24,8 @@ use Modules\V1\Stock\Enums\CategoryEnum;
  *     @OA\Property(property="maxStock", type="integer", example=500),
  *     @OA\Property(property="buyPrice", type="number", format="decimal", example=12000.00),
  *     @OA\Property(property="sellPrice", type="number", format="decimal", example=15000.00),
+ *     @OA\Property(property="actualUnitPrice", type="number", format="decimal", nullable=true, example=12500.00, description="Last purchase price from completed PO"),
+ *     @OA\Property(property="lastPriceUpdateAt", type="string", format="date-time", nullable=true, example="2026-03-02 12:00:00", description="Last timestamp when buy_price was updated by supplier confirmation"),
  *     @OA\Property(property="currentStock", type="integer", example=500),
  *     @OA\Property(property="isLowStock", type="boolean"),
  *     @OA\Property(property="isOutOfStock", type="boolean")
@@ -44,6 +46,8 @@ final class StockItemResource extends JsonResource
             'maxStock' => $this->max_stock,
             'buyPrice' => (float) $this->buy_price,
             'sellPrice' => (float) $this->sell_price,
+            'actualUnitPrice' => $this->last_purchase_price ? (float) $this->last_purchase_price : null,
+            'lastPriceUpdateAt' => $this->last_price_update_at?->format('Y-m-d H:i:s'),
             'currentStock' => $this->current_stock,
             'isLowStock' => $this->isLowStock(),
             'isOutOfStock' => $this->isOutOfStock(),

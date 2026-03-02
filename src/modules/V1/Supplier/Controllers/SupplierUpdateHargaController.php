@@ -119,8 +119,7 @@ final class SupplierUpdateHargaController
             // Build query
             $query = PurchaseOrder::with(['items.stockItem', 'supplier', 'createdBy'])
                 ->where('supplier_id', $supplierId)
-                ->where('status', POStatusEnum::TERKIRIM)
-                ->where('is_cancelled', false);  // Exclude cancelled POs
+                ->where('status', POStatusEnum::TERKIRIM);
 
             // Apply search if provided
             if (!empty($search)) {
