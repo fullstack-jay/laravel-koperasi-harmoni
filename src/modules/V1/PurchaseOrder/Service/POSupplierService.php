@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\V1\PurchaseOrder\Enums\POStatusEnum;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrder;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrderItem;
+use Modules\V1\Stock\Models\StockItem;
 
 final class POSupplierService
 {
@@ -230,6 +231,9 @@ final class POSupplierService
                 }
             }
 
+            // Validate stock availability for cancelled items
+            $this->validateStockForCancelledItems($po, $cancelItems);
+
             // Build detailed cancellation message
             $detailedMessage = $message ?? $this->buildCancellationMessage($po->po_number, $cancelItems);
 
@@ -291,5 +295,33 @@ final class POSupplierService
     private function getQuantity(array $item): int
     {
         return $item['quantity'] ?? 0;
+    }
+
+    /**
+     * Validate stock availability for cancelled items
+     * Ensures the cancelled quantity does not exceed available stock
+     */
+    private function validateStockForCancelledItems(PurchaseOrder $po, array $cancelItems): void
+    {
+        foreach ($cancelItems as $item) {
+            $stockItem = StockItem::find($item['itemId']);
+
+            if (!$stockItem) {
+                throw new Exception("Item {$item['itemName']} not found");
+            }
+
+            $availableStock = $stockItem->current_stock ?? 0;
+            $requestedQty = $item['estimatedQty'] ?? 0;
+
+            // Check if requested quantity exceeds available stock
+            if ($requestedQty > $availableStock) {
+                // Build error message
+                $errorMessage = "Mohon maaf, untuk {$po->po_number} berikut item yang tidak dapat dipenuhi:\n\n";
+                $errorMessage .= "• {$item['itemName']} (Qty: {$requestedQty} {$item['unit']})\n";
+                $errorMessage .= "  Alasan: Stok tersisa {$availableStock} {$item['unit']}";
+
+                throw new Exception($errorMessage);
+            }
+        }
     }
 }
