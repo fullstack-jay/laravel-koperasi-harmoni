@@ -2241,7 +2241,7 @@
                     "Purchase Orders"
                 ],
                 "summary": "Get all purchase orders",
-                "description": "Returns a paginated list of purchase orders. By default, cancelled POs are excluded. Use includeCancelled=true to include them.",
+                "description": "Returns a paginated list of purchase orders including all statuses (draft, dibatalkan_draft, terkirim, perubahan_harga, dikonfirmasi_supplier, dikonfirmasi_koperasi, selesai, dibatalkan_koperasi).",
                 "operationId": "14deb7b1d26a25afdb0f61fbfb73436a",
                 "requestBody": {
                     "content": {
@@ -2277,10 +2277,16 @@
                                         "type": "string",
                                         "example": "PO"
                                     },
-                                    "includeCancelled": {
-                                        "description": "Include cancelled POs in results. Default: false",
-                                        "type": "boolean",
-                                        "example": false
+                                    "status": {
+                                        "description": "Filter by status",
+                                        "type": "string",
+                                        "example": "draft"
+                                    },
+                                    "supplier_id": {
+                                        "description": "Filter by supplier ID",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "uuid"
                                     }
                                 },
                                 "type": "object"
@@ -2320,11 +2326,11 @@
                                                             "dikonfirmasi_supplier",
                                                             "dikonfirmasi_koperasi",
                                                             "selesai",
-                                                            "dibatalkan"
+                                                            "dibatalkan_koperasi"
                                                         ]
                                                     },
                                                     "statusLabel": {
-                                                        "description": "Status label shows 'Draft (Dibatalkan)' for dibatalkan_draft status",
+                                                        "description": "Human readable status label",
                                                         "type": "string",
                                                         "example": "Draft (Dibatalkan)"
                                                     },
@@ -3453,7 +3459,7 @@
                     "Purchase Orders"
                 ],
                 "summary": "Update purchase order",
-                "description": "Update a draft purchase order",
+                "description": "Update a draft or cancelled draft purchase order. Only POs with DRAFT or DIBATALKAN_DRAFT status can be updated.",
                 "operationId": "3b5f39350f70785fb9cf54480ad40e22",
                 "parameters": [
                     {
@@ -3473,44 +3479,52 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "supplier_id": {
+                                    "poDate": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-03-02"
+                                    },
+                                    "supplierId": {
                                         "type": "string",
                                         "format": "uuid"
                                     },
-                                    "po_date": {
+                                    "estimatedDeliveryDate": {
                                         "type": "string",
-                                        "format": "date"
+                                        "format": "date",
+                                        "example": "2026-03-10"
                                     },
-                                    "estimated_delivery_date": {
-                                        "type": "string",
-                                        "format": "date"
+                                    "notes": {
+                                        "type": "string"
                                     },
                                     "items": {
                                         "type": "array",
                                         "items": {
                                             "required": [
-                                                "item_id",
-                                                "estimated_qty",
-                                                "estimated_unit_price"
+                                                "itemId",
+                                                "estimatedQty",
+                                                "estimatedUnitPrice"
                                             ],
                                             "properties": {
-                                                "item_id": {
+                                                "itemId": {
                                                     "type": "string",
-                                                    "format": "uuid"
+                                                    "format": "uuid",
+                                                    "example": "uuid-stock-item"
                                                 },
-                                                "estimated_qty": {
-                                                    "type": "integer"
-                                                },
-                                                "estimated_unit_price": {
+                                                "estimatedUnitPrice": {
                                                     "type": "number",
-                                                    "format": "float"
+                                                    "format": "float",
+                                                    "example": 50000
+                                                },
+                                                "estimatedQty": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "notes": {
+                                                    "type": "string"
                                                 }
                                             },
                                             "type": "object"
                                         }
-                                    },
-                                    "notes": {
-                                        "type": "string"
                                     }
                                 },
                                 "type": "object"
@@ -3523,7 +3537,7 @@
                         "description": "PO updated successfully"
                     },
                     "400": {
-                        "description": "Can only update draft POs"
+                        "description": "Can only update draft or cancelled draft POs"
                     }
                 },
                 "security": [

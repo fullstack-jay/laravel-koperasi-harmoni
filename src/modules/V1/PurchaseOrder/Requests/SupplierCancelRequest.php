@@ -52,27 +52,8 @@ class SupplierCancelRequest extends FormRequest
             'cancelItems.*.estimatedQty' => ['required', 'integer', 'min:1'],
             'cancelItems.*.unit' => ['required', 'string'],
             'cancelItems.*.reason' => ['required', 'string', 'in:STOK_TERSISA,STOK_HABIS'],
-            'cancelItems.*.quantity' => ['nullable', 'integer', 'min:0'],
+            'cancelItems.*.quantity' => ['required', 'integer', 'min:0'],
             'message' => ['nullable', 'string'],
         ];
-    }
-
-    /**
-     * Configure the validator instance.
-     */
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            $cancelItems = $validator->getData()['cancelItems'] ?? [];
-
-            foreach ($cancelItems as $index => $item) {
-                // If reason is STOK_TERSISA, quantity is required
-                if (($item['reason'] ?? '') === 'STOK_TERSISA') {
-                    if (!isset($item['quantity']) || $item['quantity'] === null || $item['quantity'] === '') {
-                        $validator->errors()->add("cancelItems.{$index}.quantity", 'The cancelItems.' . $index . '.quantity field is required when reason is STOK_TERSISA.');
-                    }
-                }
-            }
-        });
     }
 }

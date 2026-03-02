@@ -47,8 +47,8 @@ class SupplierRejectRequest extends FormRequest
             'cancelledItems.*.itemId' => ['required', 'uuid', 'exists:stock_items,id'],
             'cancelledItems.*.reason' => ['required', 'string'],
             'cancelledItems.*.stockType' => ['required', 'in:remaining,empty'],
-            'cancelledItems.*.quantity' => ['nullable', 'integer', 'min:1', 'required_if:cancelledItems.*.stockType,remaining'],
-            'cancelledItems.*.availableDate' => ['nullable', 'string', 'required_if:cancelledItems.*.stockType,empty'],
+            'cancelledItems.*.quantity' => ['required', 'integer', 'min:0'],
+            'cancelledItems.*.availableDate' => ['nullable', 'string'],
         ];
     }
 }

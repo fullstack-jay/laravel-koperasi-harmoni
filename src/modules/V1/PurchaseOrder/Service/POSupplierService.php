@@ -183,6 +183,9 @@ final class POSupplierService
                 }
             }
 
+            // Update current_stock for each cancelled item
+            $this->updateCurrentStockFromCancelledItems($cancelledItems);
+
             // Update PO with cancellation details
             $po->update([
                 'cancellation_reason' => $cancellationReason,
@@ -231,8 +234,9 @@ final class POSupplierService
                 }
             }
 
-            // Validate stock availability for cancelled items
-            $this->validateStockForCancelledItems($po, $cancelItems);
+            // Update current_stock for each cancelled item
+            // Note: No validation needed as supplier is providing new stock quantity
+            $this->updateCurrentStockFromCancelledItems($cancelItems);
 
             // Build detailed cancellation message
             $detailedMessage = $message ?? $this->buildCancellationMessage($po->po_number, $cancelItems);
@@ -322,6 +326,26 @@ final class POSupplierService
 
                 throw new Exception($errorMessage);
             }
+        }
+    }
+
+    /**
+     * Update current_stock in stock_items table from cancelled items
+     * This updates the current_stock field with the quantity provided by supplier
+     */
+    private function updateCurrentStockFromCancelledItems(array $cancelledItems): void
+    {
+        foreach ($cancelledItems as $item) {
+            $stockItem = StockItem::find($item['itemId']);
+
+            if (!$stockItem) {
+                continue;
+            }
+
+            // Update current_stock with quantity from cancelled items
+            $stockItem->update([
+                'current_stock' => $item['quantity'] ?? 0,
+            ]);
         }
     }
 }
