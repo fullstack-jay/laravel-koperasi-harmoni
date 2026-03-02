@@ -6,6 +6,7 @@ namespace Modules\V1\PurchaseOrder\Service;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Modules\V1\PurchaseOrder\Enums\POStatusEnum;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrder;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrderItem;
@@ -174,11 +175,24 @@ final class POKoperasiService
 
     public function cancelByKoperasi(string $poId, string $reason, ?string $userId = null): PurchaseOrder
     {
+        Log::info("[PO Koperasi Cancel] Starting Koperasi PO cancellation", [
+            'po_id' => $poId,
+            'user_id' => $userId,
+            'reason' => $reason
+        ]);
+
         $po = PurchaseOrder::find($poId);
 
         if (!$po) {
+            Log::error("[PO Koperasi Cancel] PO not found", ['po_id' => $poId]);
             throw new Exception('Purchase Order not found');
         }
+
+        Log::info("[PO Koperasi Cancel] PO found", [
+            'po_id' => $poId,
+            'po_number' => $po->po_number,
+            'current_status' => $po->getAttributes()['status'] ?? null
+        ]);
 
         // Get raw status to avoid enum casting error
         $statusValue = $po->getAttributes()['status'] ?? null;
@@ -190,6 +204,13 @@ final class POKoperasiService
         ];
 
         if (!in_array($statusValue, $allowedStatuses)) {
+            Log::error("[PO Koperasi Cancel] Invalid PO status for Koperasi cancellation", [
+                'po_id' => $poId,
+                'po_number' => $po->po_number,
+                'current_status' => $statusValue,
+                'allowed_statuses' => $allowedStatuses
+            ]);
+
             throw new Exception(
                 "PO dengan status saat ini tidak dapat dibatalkan oleh Koperasi. " .
                 "Hanya status Perubahan Harga atau Dibatalkan Koperasi yang dapat dibatalkan."
@@ -199,12 +220,24 @@ final class POKoperasiService
         // Store cancellation reason
         $po->update(['cancellation_reason' => $reason]);
 
+        Log::info("[PO Koperasi Cancel] Stored cancellation reason", [
+            'po_id' => $poId,
+            'po_number' => $po->po_number,
+            'cancellation_reason' => $reason
+        ]);
+
         // Refresh to get correct enum casting
         $po = $po->fresh();
 
         // If not already cancelled by koperasi, transition to DIBATALKAN_KOPERASI status
         // If already DIBATALKAN_KOPERASI, just create history without status change
         if ($po->status !== POStatusEnum::DIBATALKAN_KOPERASI) {
+            Log::info("[PO Koperasi Cancel] Transitioning PO status to DIBATALKAN_KOPERASI", [
+                'po_id' => $poId,
+                'po_number' => $po->po_number,
+                'from_status' => $po->status->value
+            ]);
+
             $this->statusService->transitionStatus(
                 $po,
                 POStatusEnum::DIBATALKAN_KOPERASI,
@@ -213,6 +246,11 @@ final class POKoperasiService
             );
         } else {
             // Already cancelled by koperasi, just create a history entry
+            Log::info("[PO Koperasi Cancel] PO already cancelled by Koperasi, creating history entry", [
+                'po_id' => $poId,
+                'po_number' => $po->po_number
+            ]);
+
             $this->statusService->createHistory(
                 $po,
                 $po->status,
@@ -220,6 +258,12 @@ final class POKoperasiService
                 $userId
             );
         }
+
+        Log::info("[PO Koperasi Cancel] PO cancellation by Koperasi completed successfully", [
+            'po_id' => $poId,
+            'po_number' => $po->po_number,
+            'new_status' => $po->fresh()->status->value
+        ]);
 
         return $po->fresh();
     }

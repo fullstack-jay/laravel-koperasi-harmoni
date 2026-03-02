@@ -6,6 +6,7 @@ namespace Modules\V1\PurchaseOrder\Service;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Modules\V1\PurchaseOrder\Enums\POStatusEnum;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrder;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrderItem;
@@ -20,20 +21,40 @@ final class POSupplierService
 
     public function confirmPO(string $poId, array $items, ?string $invoiceNumber = null, ?string $userId = null): PurchaseOrder
     {
+        Log::info("[PO Supplier Confirm] Starting PO confirmation", [
+            'po_id' => $poId,
+            'user_id' => $userId,
+            'invoice_number' => $invoiceNumber,
+            'items_count' => count($items)
+        ]);
+
         DB::beginTransaction();
 
         try {
             $po = PurchaseOrder::with('items')->find($poId);
 
             if (!$po) {
+                Log::error("[PO Supplier Confirm] PO not found", ['po_id' => $poId]);
                 throw new Exception('Purchase Order not found');
             }
 
+            Log::info("[PO Supplier Confirm] PO found", [
+                'po_number' => $po->po_number,
+                'current_status' => $po->status->value
+            ]);
+
             if ($po->status !== POStatusEnum::TERKIRIM) {
+                Log::error("[PO Supplier Confirm] Invalid PO status", [
+                    'po_id' => $poId,
+                    'po_number' => $po->po_number,
+                    'current_status' => $po->status->value,
+                    'expected_status' => POStatusEnum::TERKIRIM->value
+                ]);
                 throw new Exception('PO must be in TERKIRIM status');
             }
 
             $hasPriceChanges = false;
+            $priceChangeDetails = [];
 
             foreach ($items as $itemData) {
                 // Find item by stock item_id (not PO item id)
@@ -42,12 +63,32 @@ final class POSupplierService
                     ->first();
 
                 if (!$item) {
+                    Log::error("[PO Supplier Confirm] PO Item not found", [
+                        'po_id' => $poId,
+                        'item_id' => $itemData['itemId']
+                    ]);
                     throw new Exception('Item not found');
                 }
 
                 // Check if price changed
-                if ((float) $itemData['actualPrice'] !== (float) $item->estimated_unit_price) {
+                $oldPrice = (float) $item->estimated_unit_price;
+                $newPrice = (float) $itemData['actualPrice'];
+
+                if ($newPrice !== $oldPrice) {
                     $hasPriceChanges = true;
+                    $priceChangeDetails[] = [
+                        'item_id' => $itemData['itemId'],
+                        'old_price' => $oldPrice,
+                        'new_price' => $newPrice,
+                        'difference' => $newPrice - $oldPrice
+                    ];
+
+                    Log::info("[PO Supplier Confirm] Price changed for item", [
+                        'po_id' => $poId,
+                        'item_id' => $itemData['itemId'],
+                        'old_price' => $oldPrice,
+                        'new_price' => $newPrice
+                    ]);
                 }
 
                 // Update actual price and calculate actual qty and subtotal
@@ -77,10 +118,23 @@ final class POSupplierService
                 'invoice_number' => $invoiceNumber,
             ]);
 
+            Log::info("[PO Supplier Confirm] PO totals updated", [
+                'po_id' => $poId,
+                'po_number' => $po->po_number,
+                'estimated_total' => $po->estimated_total,
+                'actual_total' => $actualTotal,
+                'has_price_changes' => $hasPriceChanges
+            ]);
+
             // Transition status based on price changes
             if ($hasPriceChanges) {
                 // Price changed: needs koperasi review
                 // UPDATE: Update harga beli di master supplier items
+                Log::info("[PO Supplier Confirm] Price changes detected, updating supplier prices", [
+                    'po_id' => $poId,
+                    'price_changes' => $priceChangeDetails
+                ]);
+
                 $this->updateSupplierItemPrices($po->id, $items);
 
                 $this->statusService->transitionStatus(
@@ -89,6 +143,11 @@ final class POSupplierService
                     'Supplier confirmed with price changes, awaiting koperasi review',
                     $userId
                 );
+
+                Log::info("[PO Supplier Confirm] PO status changed to PERUBAHAN_HARGA", [
+                    'po_id' => $poId,
+                    'po_number' => $po->po_number
+                ]);
             } else {
                 // No price changes: direct confirmation
                 $this->statusService->transitionStatus(
@@ -97,13 +156,31 @@ final class POSupplierService
                     'Supplier confirmed PO',
                     $userId
                 );
+
+                Log::info("[PO Supplier Confirm] PO status changed to DIKONFIRMASI_SUPPLIER", [
+                    'po_id' => $poId,
+                    'po_number' => $po->po_number
+                ]);
             }
 
             DB::commit();
 
+            Log::info("[PO Supplier Confirm] PO confirmation completed successfully", [
+                'po_id' => $poId,
+                'po_number' => $po->po_number,
+                'new_status' => $po->fresh()->status->value
+            ]);
+
             return $po->fresh()->load('items');
         } catch (Exception $e) {
             DB::rollBack();
+
+            Log::error("[PO Supplier Confirm] Failed to confirm PO", [
+                'po_id' => $poId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             throw $e;
         }
     }
@@ -159,16 +236,34 @@ final class POSupplierService
 
     public function rejectPO(string $poId, string $cancellationReason, array $cancelledItems, ?string $userId = null): PurchaseOrder
     {
+        Log::info("[PO Supplier Reject] Starting PO rejection", [
+            'po_id' => $poId,
+            'user_id' => $userId,
+            'cancelled_items_count' => count($cancelledItems)
+        ]);
+
         DB::beginTransaction();
 
         try {
             $po = PurchaseOrder::find($poId);
 
             if (!$po) {
+                Log::error("[PO Supplier Reject] PO not found", ['po_id' => $poId]);
                 throw new Exception('Purchase Order not found');
             }
 
+            Log::info("[PO Supplier Reject] PO found", [
+                'po_number' => $po->po_number,
+                'current_status' => $po->status->value
+            ]);
+
             if ($po->status !== POStatusEnum::TERKIRIM) {
+                Log::error("[PO Supplier Reject] Invalid PO status", [
+                    'po_id' => $poId,
+                    'po_number' => $po->po_number,
+                    'current_status' => $po->status->value,
+                    'expected_status' => POStatusEnum::TERKIRIM->value
+                ]);
                 throw new Exception('PO must be in TERKIRIM status');
             }
 
@@ -179,9 +274,18 @@ final class POSupplierService
 
             foreach ($cancelledItems as $item) {
                 if (!in_array($item['itemId'], $poItemIds)) {
+                    Log::error("[PO Supplier Reject] Item does not belong to PO", [
+                        'po_id' => $poId,
+                        'item_id' => $item['itemId']
+                    ]);
                     throw new Exception('Item ' . $item['itemId'] . ' does not belong to this PO');
                 }
             }
+
+            Log::info("[PO Supplier Reject] Updating current_stock for cancelled items", [
+                'po_id' => $poId,
+                'cancelled_items' => $cancelledItems
+            ]);
 
             // Update current_stock for each cancelled item
             $this->updateCurrentStockFromCancelledItems($cancelledItems);
@@ -190,6 +294,12 @@ final class POSupplierService
             $po->update([
                 'cancellation_reason' => $cancellationReason,
                 'cancelled_items' => $cancelledItems,
+            ]);
+
+            Log::info("[PO Supplier Reject] Transitioning PO status to DIBATALKAN_DRAFT", [
+                'po_id' => $poId,
+                'po_number' => $po->po_number,
+                'cancellation_reason' => $cancellationReason
             ]);
 
             $this->statusService->transitionStatus(
@@ -201,25 +311,56 @@ final class POSupplierService
 
             DB::commit();
 
+            Log::info("[PO Supplier Reject] PO rejection completed successfully", [
+                'po_id' => $poId,
+                'po_number' => $po->po_number,
+                'new_status' => $po->fresh()->status->value
+            ]);
+
             return $po->fresh()->load('items');
         } catch (Exception $e) {
             DB::rollBack();
+
+            Log::error("[PO Supplier Reject] Failed to reject PO", [
+                'po_id' => $poId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             throw $e;
         }
     }
 
     public function cancelPO(string $poId, array $cancelItems, ?string $message = null, ?string $userId = null): PurchaseOrder
     {
+        Log::info("[PO Supplier Cancel] Starting PO cancellation", [
+            'po_id' => $poId,
+            'user_id' => $userId,
+            'cancel_items_count' => count($cancelItems)
+        ]);
+
         DB::beginTransaction();
 
         try {
             $po = PurchaseOrder::with('items')->find($poId);
 
             if (!$po) {
+                Log::error("[PO Supplier Cancel] PO not found", ['po_id' => $poId]);
                 throw new Exception('Purchase Order not found');
             }
 
+            Log::info("[PO Supplier Cancel] PO found", [
+                'po_number' => $po->po_number,
+                'current_status' => $po->status->value
+            ]);
+
             if ($po->status !== POStatusEnum::TERKIRIM) {
+                Log::error("[PO Supplier Cancel] Invalid PO status", [
+                    'po_id' => $poId,
+                    'po_number' => $po->po_number,
+                    'current_status' => $po->status->value,
+                    'expected_status' => POStatusEnum::TERKIRIM->value
+                ]);
                 throw new Exception('PO must be in TERKIRIM status to be cancelled');
             }
 
@@ -230,9 +371,18 @@ final class POSupplierService
 
             foreach ($cancelItems as $item) {
                 if (!in_array($item['itemId'], $poItemIds)) {
+                    Log::error("[PO Supplier Cancel] Item does not belong to PO", [
+                        'po_id' => $poId,
+                        'item_id' => $item['itemId']
+                    ]);
                     throw new Exception('Item ' . $item['itemId'] . ' does not belong to this PO');
                 }
             }
+
+            Log::info("[PO Supplier Cancel] Updating current_stock and scheduling stock for cancelled items", [
+                'po_id' => $poId,
+                'cancel_items' => $cancelItems
+            ]);
 
             // Update current_stock for each cancelled item
             // Note: No validation needed as supplier is providing new stock quantity
@@ -250,6 +400,12 @@ final class POSupplierService
                 'cancelled_items' => $cancelItems,
             ]);
 
+            Log::info("[PO Supplier Cancel] Transitioning PO status to DIBATALKAN_DRAFT", [
+                'po_id' => $poId,
+                'po_number' => $po->po_number,
+                'cancellation_message' => $detailedMessage
+            ]);
+
             $this->statusService->transitionStatus(
                 $po,
                 POStatusEnum::DIBATALKAN_DRAFT,
@@ -259,9 +415,22 @@ final class POSupplierService
 
             DB::commit();
 
+            Log::info("[PO Supplier Cancel] PO cancellation completed successfully", [
+                'po_id' => $poId,
+                'po_number' => $po->po_number,
+                'new_status' => $po->fresh()->status->value
+            ]);
+
             return $po->fresh()->load('items');
         } catch (Exception $e) {
             DB::rollBack();
+
+            Log::error("[PO Supplier Cancel] Failed to cancel PO", [
+                'po_id' => $poId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             throw $e;
         }
     }
@@ -341,8 +510,14 @@ final class POSupplierService
             $stockItem = StockItem::find($item['itemId']);
 
             if (!$stockItem) {
+                Log::warning("[Update Current Stock] Stock item not found", [
+                    'item_id' => $item['itemId']
+                ]);
                 continue;
             }
+
+            $oldStock = $stockItem->current_stock;
+            $newStock = $item['quantity'] ?? 0;
 
             // Parse availableDate if exists (format: "04/03/2026 pukul 22:58")
             $scheduledAt = null;
@@ -351,11 +526,29 @@ final class POSupplierService
                 $dateString = str_replace(' pukul ', ' ', $item['availableDate']);
                 try {
                     $scheduledAt = \Carbon\Carbon::createFromFormat('d/m/Y H:i', trim($dateString));
+                    Log::info("[Update Current Stock] Parsed scheduled date", [
+                        'item_id' => $item['itemId'],
+                        'item_name' => $stockItem->name,
+                        'available_date' => $item['availableDate'],
+                        'parsed_at' => $scheduledAt->toDateTimeString()
+                    ]);
                 } catch (\Exception $e) {
                     // If parsing fails, try another format or set to null
                     try {
                         $scheduledAt = \Carbon\Carbon::parse($item['availableDate']);
+                        Log::info("[Update Current Stock] Parsed scheduled date (fallback)", [
+                            'item_id' => $item['itemId'],
+                            'item_name' => $stockItem->name,
+                            'available_date' => $item['availableDate'],
+                            'parsed_at' => $scheduledAt->toDateTimeString()
+                        ]);
                     } catch (\Exception $e2) {
+                        Log::error("[Update Current Stock] Failed to parse scheduled date", [
+                            'item_id' => $item['itemId'],
+                            'item_name' => $stockItem->name,
+                            'available_date' => $item['availableDate'],
+                            'error' => $e2->getMessage()
+                        ]);
                         $scheduledAt = null;
                     }
                 }
@@ -366,25 +559,53 @@ final class POSupplierService
             if ($scheduledAt && isset($item['estimatedQty']) && isset($item['quantity'])) {
                 // scheduled_quantity = estimated_qty - current_available_qty
                 $scheduledQuantity = max(0, $item['estimatedQty'] - $item['quantity']);
+
+                Log::info("[Update Current Stock] Calculated scheduled quantity", [
+                    'item_id' => $item['itemId'],
+                    'item_name' => $stockItem->name,
+                    'estimated_qty' => $item['estimatedQty'],
+                    'current_available_qty' => $item['quantity'],
+                    'scheduled_quantity' => $scheduledQuantity,
+                    'scheduled_for' => $scheduledAt->toDateTimeString()
+                ]);
             }
 
             // Update stock item with current stock and scheduled stock info
             $stockItem->update([
-                'current_stock' => $item['quantity'] ?? 0,
+                'current_stock' => $newStock,
                 'scheduled_quantity' => $scheduledQuantity > 0 ? $scheduledQuantity : null,
                 'scheduled_at' => $scheduledAt,
                 'scheduled_processed' => false,
+            ]);
+
+            Log::info("[Update Current Stock] Updated stock item", [
+                'item_id' => $item['itemId'],
+                'item_name' => $stockItem->name,
+                'old_stock' => $oldStock,
+                'new_stock' => $newStock,
+                'scheduled_quantity' => $scheduledQuantity > 0 ? $scheduledQuantity : null,
+                'scheduled_at' => $scheduledAt ? $scheduledAt->toDateTimeString() : null
             ]);
 
             // Dispatch delayed job if scheduled stock exists
             if ($scheduledAt && $scheduledQuantity > 0 && $scheduledAt->isFuture()) {
                 $delayInSeconds = $scheduledAt->diffInSeconds(now());
 
-                \App\Jobs\ProcessScheduledStockJob::dispatch(
+                $job = \App\Jobs\ProcessScheduledStockJob::dispatch(
                     $stockItem->id,
                     $scheduledQuantity
                 )->delay($scheduledAt)
                  ->uniqueId("stock_scheduled_{$stockItem->id}");
+
+                Log::info("[Update Current Stock] Dispatched delayed job for scheduled stock", [
+                    'item_id' => $item['itemId'],
+                    'item_name' => $stockItem->name,
+                    'job_id' => $job->uniqueId(),
+                    'scheduled_quantity' => $scheduledQuantity,
+                    'scheduled_at' => $scheduledAt->toDateTimeString(),
+                    'delay_seconds' => $delayInSeconds,
+                    'will_process_at' => $scheduledAt->toDateTimeString()
+                ]);
             }
         }
     }

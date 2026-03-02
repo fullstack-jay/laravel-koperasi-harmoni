@@ -6,6 +6,7 @@ namespace Modules\V1\PurchaseOrder\Controllers;
 
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Modules\V1\PurchaseOrder\Enums\POStatusEnum;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrder;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrderItem;
@@ -76,13 +77,32 @@ final class POUpdateController extends POBaseController
      */
     public function update(Request $request, PurchaseOrder $po)
     {
+        Log::info("[PO Update] Starting PO update", [
+            'po_id' => $po->id,
+            'po_number' => $po->po_number,
+            'user_id' => $request->user()?->id
+        ]);
+
         try {
             // Allow update for DRAFT and DIBATALKAN_DRAFT
             $allowedStatuses = [POStatusEnum::DRAFT, POStatusEnum::DIBATALKAN_DRAFT];
 
             if (!in_array($po->status, $allowedStatuses)) {
+                Log::error("[PO Update] Invalid PO status for update", [
+                    'po_id' => $po->id,
+                    'po_number' => $po->po_number,
+                    'current_status' => $po->status->value,
+                    'allowed_statuses' => array_map(fn($s) => $s->value, $allowedStatuses)
+                ]);
+
                 return ResponseHelper::error('Can only update draft or cancelled draft POs', 400);
             }
+
+            Log::info("[PO Update] PO status validated", [
+                'po_id' => $po->id,
+                'po_number' => $po->po_number,
+                'status' => $po->status->value
+            ]);
 
             // Validate request with camelCase fields
             $validated = $request->validate([
@@ -99,9 +119,24 @@ final class POUpdateController extends POBaseController
 
             $request->merge(['updated_by' => $request->user()?->id]);
 
+            Log::info("[PO Update] Request validated", [
+                'po_id' => $po->id,
+                'has_items' => $request->has('items'),
+                'items_count' => $request->has('items') ? count($request->items) : 0
+            ]);
+
             // Validate stock availability if items are provided
             if ($request->has('items')) {
+                Log::info("[PO Update] Validating stock availability", [
+                    'po_id' => $po->id,
+                    'items_count' => count($request->items)
+                ]);
+
                 $this->validateStockAvailability($request->items, $po);
+
+                Log::info("[PO Update] Stock availability validated successfully", [
+                    'po_id' => $po->id
+                ]);
             }
 
             // Map camelCase to snake_case for database
@@ -117,9 +152,20 @@ final class POUpdateController extends POBaseController
 
             $po->update($poData);
 
+            Log::info("[PO Update] PO header updated", [
+                'po_id' => $po->id,
+                'po_number' => $po->po_number,
+                'updated_fields' => array_keys($poData)
+            ]);
+
             if ($request->has('items')) {
                 // Delete existing items
-                PurchaseOrderItem::where('purchase_order_id', $po->id)->delete();
+                $deletedItems = PurchaseOrderItem::where('purchase_order_id', $po->id)->delete();
+
+                Log::info("[PO Update] Deleted existing PO items", [
+                    'po_id' => $po->id,
+                    'deleted_count' => $deletedItems
+                ]);
 
                 // Create new items
                 foreach ($request->items as $item) {
@@ -134,17 +180,42 @@ final class POUpdateController extends POBaseController
                         ),
                         'notes' => $item['notes'] ?? null,
                     ]);
+
+                    Log::info("[PO Update] Created PO item", [
+                        'po_id' => $po->id,
+                        'item_id' => $item['itemId'],
+                        'estimated_qty' => $item['estimatedQty'],
+                        'estimated_unit_price' => $item['estimatedUnitPrice']
+                    ]);
                 }
 
                 // Recalculate total
                 $this->calculationService->updatePOTotal($po);
+
+                Log::info("[PO Update] PO total recalculated", [
+                    'po_id' => $po->id,
+                    'new_total' => $po->fresh()->estimated_total
+                ]);
             }
+
+            Log::info("[PO Update] PO updated successfully", [
+                'po_id' => $po->id,
+                'po_number' => $po->po_number,
+                'total_items' => $request->has('items') ? count($request->items) : 0
+            ]);
 
             return ResponseHelper::success(
                 data: new POResource($po->load('items')),
                 message: 'Purchase Order updated successfully'
             );
         } catch (Exception $e) {
+            Log::error("[PO Update] Failed to update PO", [
+                'po_id' => $po->id,
+                'po_number' => $po->po_number,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return ResponseHelper::error($e->getMessage());
         }
     }
@@ -159,11 +230,25 @@ final class POUpdateController extends POBaseController
             $stockItem = StockItem::find($item['itemId']);
 
             if (!$stockItem) {
+                Log::error("[PO Update] Stock item not found during validation", [
+                    'po_id' => $po->id,
+                    'po_number' => $po->po_number,
+                    'item_id' => $item['itemId']
+                ]);
+
                 throw new Exception("Item dengan ID {$item['itemId']} tidak ditemukan");
             }
 
             $availableStock = $stockItem->current_stock ?? 0;
             $requestedQty = $item['estimatedQty'] ?? 0;
+
+            Log::info("[PO Update] Checking stock availability", [
+                'po_id' => $po->id,
+                'item_id' => $item['itemId'],
+                'item_name' => $stockItem->name,
+                'requested_qty' => $requestedQty,
+                'available_stock' => $availableStock
+            ]);
 
             // Check if requested quantity exceeds available stock
             if ($requestedQty > $availableStock) {
@@ -171,8 +256,27 @@ final class POUpdateController extends POBaseController
                 $errorMessage .= "• {$stockItem->name} (Qty: {$requestedQty})\n";
                 $errorMessage .= "  Alasan: Stok tersisa {$availableStock}";
 
+                Log::error("[PO Update] Stock validation failed - insufficient stock", [
+                    'po_id' => $po->id,
+                    'po_number' => $po->po_number,
+                    'item_id' => $item['itemId'],
+                    'item_name' => $stockItem->name,
+                    'requested_qty' => $requestedQty,
+                    'available_stock' => $availableStock,
+                    'shortage' => $requestedQty - $availableStock
+                ]);
+
                 throw new Exception($errorMessage);
             }
+
+            Log::info("[PO Update] Stock availability validated for item", [
+                'po_id' => $po->id,
+                'item_id' => $item['itemId'],
+                'item_name' => $stockItem->name,
+                'requested_qty' => $requestedQty,
+                'available_stock' => $availableStock,
+                'status' => 'OK'
+            ]);
         }
     }
 }
