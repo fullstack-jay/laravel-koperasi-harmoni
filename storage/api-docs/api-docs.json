@@ -2437,6 +2437,82 @@
                 ]
             }
         },
+        "/PurchaseOrders/{po}/Delete": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Hard delete purchase order",
+                "description": "Permanently delete a purchase order from the database. This action cannot be undone. Only POs with DRAFT status can be deleted. Related records (items, status histories) will be cascade deleted automatically.",
+                "operationId": "264a8941a30a6041207eed21898fd1fc",
+                "parameters": [
+                    {
+                        "name": "po",
+                        "in": "path",
+                        "description": "Purchase Order UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PO deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "statusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Purchase order deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "PO not found"
+                    },
+                    "422": {
+                        "description": "Cannot delete PO in current status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cannot delete PO in 'terkirim' status. Only draft POs can be deleted."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/PurchaseOrders/Create": {
             "post": {
                 "tags": [
@@ -5887,8 +5963,7 @@
                                 "itemName",
                                 "estimatedQty",
                                 "unit",
-                                "reason",
-                                "quantity"
+                                "reason"
                             ],
                             "properties": {
                                 "itemId": {
@@ -5913,12 +5988,16 @@
                                     "example": "pack"
                                 },
                                 "reason": {
-                                    "description": "Cancellation reason code (STOK_TERSISA, STOK_HABIS, etc)",
+                                    "description": "Cancellation reason code (STOK_TERSISA, STOK_HABIS)",
                                     "type": "string",
+                                    "enum": [
+                                        "STOK_TERSISA",
+                                        "STOK_HABIS"
+                                    ],
                                     "example": "STOK_TERSISA"
                                 },
                                 "quantity": {
-                                    "description": "Available quantity",
+                                    "description": "Available quantity (required for STOK_TERSISA, optional for STOK_HABIS)",
                                     "type": "integer",
                                     "example": 5
                                 }

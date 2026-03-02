@@ -27,6 +27,9 @@ Route::middleware(['auth:sanctum', 'role:koperasi'])->group(function () {
     // Show specific PO - must come after specific routes
     Route::post('{po}', [POController::class, 'show'])->name('show');
 
+    // Delete PO (hard delete)
+    Route::post('{po}/Delete', [POController::class, 'delete'])->name('delete');
+
     // Send PO to supplier - must come before Update route
     Route::post('{po}/Send', [POSendController::class, 'send'])->name('send');
 

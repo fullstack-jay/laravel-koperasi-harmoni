@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\V1\PurchaseOrder\Enums\POStatusEnum;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrder;
-use Modules\V1\PurchaseOrder\Models\PurchaseOrderItem;
 
 final class POService
 {
@@ -117,6 +116,30 @@ final class POService
         );
 
         return $po->fresh();
+    }
+
+    /**
+     * Hard delete purchase order
+     * Only POs with DRAFT status can be deleted
+     */
+    public function hardDelete(string $poId): void
+    {
+        $po = PurchaseOrder::find($poId);
+
+        if (!$po) {
+            throw new Exception('Purchase Order not found', 404);
+        }
+
+        // Validate PO status - only draft can be deleted
+        if ($po->status->value !== POStatusEnum::DRAFT->value) {
+            throw new Exception(
+                "Cannot delete PO in '{$po->status->value}' status. Only draft POs can be deleted.",
+                422
+            );
+        }
+
+        // Hard delete the PO (cascade delete will handle related records)
+        $po->forceDelete();
     }
 
     private function generatePONumber(): string

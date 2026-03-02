@@ -4,14 +4,20 @@ declare(strict_types=1);
 
 namespace Modules\V1\PurchaseOrder\Controllers;
 
+use Exception;
 use Illuminate\Http\Request;
 use Modules\V1\PurchaseOrder\Enums\POStatusEnum;
 use Modules\V1\PurchaseOrder\Models\PurchaseOrder;
 use Modules\V1\PurchaseOrder\Resources\POResource;
+use Modules\V1\PurchaseOrder\Service\POService;
 use Shared\Helpers\ResponseHelper;
 
 final class POController extends POBaseController
 {
+    public function __construct(
+        private POService $poService
+    ) {
+    }
     /**
      * @OA\Post(
      *      path="/PurchaseOrders/LoadData",
@@ -143,5 +149,67 @@ final class POController extends POBaseController
         $po->load(['supplier', 'items.stockItem', 'statusHistories']);
 
         return ResponseHelper::success(new POResource($po));
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/PurchaseOrders/{po}/Delete",
+     *     summary="Hard delete purchase order",
+     *     description="Permanently delete a purchase order from the database. This action cannot be undone. Only POs with DRAFT status can be deleted. Related records (items, status histories) will be cascade deleted automatically.",
+     *     tags={"Purchase Orders"},
+     *
+     *     @OA\Parameter(
+     *         name="po",
+     *         in="path",
+     *         required=true,
+     *         description="Purchase Order UUID",
+     *
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="PO deleted successfully",
+     *
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="statusCode", type="integer", example=200),
+     *             @OA\Property(property="message", type="string", example="Purchase order deleted successfully")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="PO not found"
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Cannot delete PO in current status",
+     *
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Cannot delete PO in 'terkirim' status. Only draft POs can be deleted.")
+     *         )
+     *     ),
+     *     security={
+     *         {"bearerAuth": {}}
+     *     }
+     * )
+     */
+    public function delete(PurchaseOrder $po)
+    {
+        try {
+            $this->poService->hardDelete($po->id);
+
+            return ResponseHelper::success(
+                message: 'Purchase order deleted successfully'
+            );
+        } catch (Exception $e) {
+            return ResponseHelper::error(
+                $e->getMessage(),
+                $e->getCode() === 422 ? 422 : 500
+            );
+        }
     }
 }
