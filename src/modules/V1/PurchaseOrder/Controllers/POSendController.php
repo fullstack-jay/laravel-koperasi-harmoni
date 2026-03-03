@@ -46,8 +46,8 @@ final class POSendController extends POBaseController
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="id", type="string", format="uuid"),
      *                 @OA\Property(property="poNumber", type="string"),
-     *                 @OA\Property(property="status", type="string", example="terkirim"),
-     *                 @OA\Property(property="statusLabel", type="string", example="Terkirim")
+     *                 @OA\Property(property="status", type="string", example="menunggu_persetujuan_supplier"),
+     *                 @OA\Property(property="statusLabel", type="string", example="Menunggu Persetujuan Supplier")
      *             )
      *         )
      *     ),
@@ -70,7 +70,7 @@ final class POSendController extends POBaseController
     public function send(Request $request, PurchaseOrder $po)
     {
         try {
-            // Send PO (update status to TERKIRIM)
+            // Send PO (update status to MENUNGGU_PERSETUJUAN_SUPPLIER)
             $updatedPO = $this->poService->sendToSupplier(
                 $po->id,
                 $request->user()?->id

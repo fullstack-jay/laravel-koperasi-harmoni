@@ -72,4 +72,44 @@ class SupplierCancelRequest extends FormRequest
             'message' => ['nullable', 'string'],
         ];
     }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'cancelItems.*.itemId.required' => 'ID barang wajib diisi',
+            'cancelItems.*.itemId.uuid' => 'Format ID barang tidak valid (harus UUID)',
+            'cancelItems.*.itemId.exists' => 'Barang tidak ditemukan',
+            'cancelItems.*.itemName.required' => 'Nama barang wajib diisi',
+            'cancelItems.*.estimatedQty.required' => 'Perkiraan jumlah wajib diisi',
+            'cancelItems.*.estimatedQty.integer' => 'Perkiraan jumlah harus berupa angka',
+            'cancelItems.*.estimatedQty.min' => 'Perkiraan jumlah minimal 1',
+            'cancelItems.*.unit.required' => 'Satuan barang wajib diisi',
+            'cancelItems.*.reason.required' => 'Alasan pembatalan wajib diisi',
+            'cancelItems.*.reason.in' => 'Alasan pembatalan harus salah satu dari: STOK_TERSISA, STOK_HABIS',
+            'cancelItems.*.quantity.required' => 'Jumlah stok tersedia wajib diisi',
+            'cancelItems.*.quantity.integer' => 'Jumlah stok harus berupa angka',
+            'cancelItems.*.quantity.min' => 'Jumlah stok tidak boleh negatif',
+            'cancelItems.*.stokBertambah.integer' => 'Jumlah stok tambahan harus berupa angka',
+            'cancelItems.*.stokBertambah.min' => 'Jumlah stok tambahan tidak boleh negatif',
+            'cancelItems.*.isSameExpired.required' => 'Informasi tanggal kadaluarsa wajib diisi',
+            'cancelItems.*.tanggalExpired.required_if' => 'Tanggal kadaluarsa wajib diisi jika semua barang memiliki tanggal kadaluarsa yang sama',
+            'cancelItems.*.tanggalExpired.date' => 'Format tanggal kadaluarsa tidak valid',
+            'cancelItems.*.quantityExpiredTerdekat.required_if' => 'Jumlah batch kadaluarsa terdekat wajib diisi',
+            'cancelItems.*.quantityExpiredTerdekat.integer' => 'Jumlah batch kadaluarsa terdekat harus berupa angka',
+            'cancelItems.*.quantityExpiredTerdekat.min' => 'Jumlah batch kadaluarsa terdekat tidak boleh negatif',
+            'cancelItems.*.tanggalExpiredTerdekat.required_if' => 'Tanggal kadaluarsa terdekat wajib diisi',
+            'cancelItems.*.tanggalExpiredTerdekat.date' => 'Format tanggal kadaluarsa terdekat tidak valid',
+            'cancelItems.*.quantityExpiredTerjauh.required_if' => 'Jumlah batch kadaluarsa terjauh wajib diisi',
+            'cancelItems.*.quantityExpiredTerjauh.integer' => 'Jumlah batch kadaluarsa terjauh harus berupa angka',
+            'cancelItems.*.quantityExpiredTerjauh.min' => 'Jumlah batch kadaluarsa terjauh tidak boleh negatif',
+            'cancelItems.*.tanggalExpiredTerjauh.required_if' => 'Tanggal kadaluarsa terjauh wajib diisi',
+            'cancelItems.*.tanggalExpiredTerjauh.date' => 'Format tanggal kadaluarsa terjauh tidak valid',
+            'cancelItems.*.availableDate.date' => 'Format tanggal stok tersedia tidak valid',
+        ];
+    }
 }

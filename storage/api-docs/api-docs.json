@@ -3024,11 +3024,11 @@
                                                 },
                                                 "status": {
                                                     "type": "string",
-                                                    "example": "terkirim"
+                                                    "example": "menunggu_persetujuan_supplier"
                                                 },
                                                 "statusLabel": {
                                                     "type": "string",
-                                                    "example": "Terkirim"
+                                                    "example": "Menunggu Persetujuan Supplier"
                                                 }
                                             },
                                             "type": "object"
@@ -3073,7 +3073,7 @@
                     "Purchase Orders"
                 ],
                 "summary": "Supplier confirms PO with prices and expiry batch information",
-                "description": "Supplier confirms purchase order by providing actual prices, invoice number, and expiry batch information. If prices changed, the system will automatically update the buy_price in supplier_items master table and set price_updated_at to current timestamp. Expiry information will be saved to stock_items table. PO status will change to PERUBAHAN_HARGA if there are price changes, or DIKONFIRMASI_SUPPLIER if no changes.",
+                "description": "Supplier confirms purchase order by providing actual prices, invoice number, and expiry batch information. If prices changed, the system will automatically update the buy_price in supplier_items master table and set price_updated_at to current timestamp. Expiry information will be saved to stock_items table. PO status will change to PERUBAHAN_HARGA if there are price changes, or DIKONFIRMASI_SUPPLIER if no changes.\\n\\n**Validasi expiredBatches:** Ketika isSameExpiry=false, jumlah quantity dari semua batch tidak boleh melebihi estimated_qty yang dipesan. Contoh: Jika Beras Premium 25 KG memiliki estimated_qty=50, dan supplier memberikan 2 batch: batch 1 qty=20, batch 2 qty=30, totalnya adalah 50 yang valid.",
                 "operationId": "ce6a1db56ca7f72813af2610bcfdbc93",
                 "parameters": [
                     {

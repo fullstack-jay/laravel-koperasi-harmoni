@@ -59,9 +59,9 @@ class POItemResource extends JsonResource
 
         // If different expiry dates - get from expiry batches or use summary fields
         $expiryBatches = [];
-        if ($this->stockItem->relationLoaded('expiryBatches')) {
-            // Load from expiry batches relationship
-            foreach ($stockItem->expiryBatches as $batch) {
+        if ($this->relationLoaded('expiryBatches')) {
+            // Load from PO item's expiry batches relationship
+            foreach ($this->expiryBatches as $batch) {
                 $expiryBatches[] = [
                     'batchNumber' => $batch->batch_number,
                     'quantity' => $batch->quantity,

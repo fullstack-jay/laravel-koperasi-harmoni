@@ -10,7 +10,11 @@ use Shared\Models\BaseModel;
 class StockExpiryBatch extends BaseModel
 {
     protected $fillable = [
+        'purchase_order_item_id',
+        'purchase_order_id',
+        'supplier_id',
         'stock_item_id',
+        'item_name',
         'batch_number',
         'quantity',
         'expiry_date',
@@ -25,7 +29,31 @@ class StockExpiryBatch extends BaseModel
     ];
 
     /**
-     * Relationship: Expiry batch belongs to stock item
+     * Relationship: Expiry batch belongs to purchase order item
+     */
+    public function purchaseOrderItem(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\V1\PurchaseOrder\Models\PurchaseOrderItem::class, 'purchase_order_item_id');
+    }
+
+    /**
+     * Relationship: Expiry batch belongs to purchase order
+     */
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\V1\PurchaseOrder\Models\PurchaseOrder::class, 'purchase_order_id');
+    }
+
+    /**
+     * Relationship: Expiry batch belongs to supplier
+     */
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\V1\Supplier\Models\Supplier::class, 'supplier_id');
+    }
+
+    /**
+     * Relationship: Expiry batch belongs to stock item (optional)
      */
     public function stockItem(): BelongsTo
     {
@@ -49,14 +77,30 @@ class StockExpiryBatch extends BaseModel
     }
 
     /**
-     * Scope: Get unprocessed batches for a specific stock item, ordered by expiry date (FEFO)
+     * Scope: Get unprocessed batches for a specific PO item, ordered by expiry date (FEFO)
      */
-    public function scopeUnprocessedForItem($query, $stockItemId)
+    public function scopeUnprocessedForPOItem($query, $poItemId)
     {
-        return $query->where('stock_item_id', $stockItemId)
+        return $query->where('purchase_order_item_id', $poItemId)
             ->where('is_processed', false)
             ->orderBy('expiry_date', 'asc')
             ->orderBy('batch_number', 'asc');
+    }
+
+    /**
+     * Scope: Get batches for a specific PO
+     */
+    public function scopeForPO($query, $poId)
+    {
+        return $query->where('purchase_order_id', $poId);
+    }
+
+    /**
+     * Scope: Get batches for a specific supplier
+     */
+    public function scopeForSupplier($query, $supplierId)
+    {
+        return $query->where('supplier_id', $supplierId);
     }
 
     /**

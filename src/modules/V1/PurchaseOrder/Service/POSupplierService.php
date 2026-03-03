@@ -43,14 +43,14 @@ final class POSupplierService
                 'current_status' => $po->status->value
             ]);
 
-            if ($po->status !== POStatusEnum::TERKIRIM) {
+            if ($po->status !== POStatusEnum::MENUNGGU_PERSETUJUAN_SUPPLIER) {
                 Log::error("[PO Supplier Confirm] Invalid PO status", [
                     'po_id' => $poId,
                     'po_number' => $po->po_number,
                     'current_status' => $po->status->value,
-                    'expected_status' => POStatusEnum::TERKIRIM->value
+                    'expected_status' => POStatusEnum::MENUNGGU_PERSETUJUAN_SUPPLIER->value
                 ]);
-                throw new Exception('PO must be in TERKIRIM status');
+                throw new Exception('PO must be in MENUNGGU_PERSETUJUAN_SUPPLIER status');
             }
 
             $hasPriceChanges = false;
@@ -354,6 +354,7 @@ final class POSupplierService
 
             Log::info("[PO Supplier Confirm] Updating stock item with expired tracking", [
                 'po_id' => $poId,
+                'po_item_id' => $poItem->id,
                 'item_id' => $poItem->item_id,
                 'item_name' => $stockItem->name,
                 'is_same_expired' => $expiredData['is_same_expired'],
@@ -363,7 +364,7 @@ final class POSupplierService
             $stockItem->update($expiredData);
 
             // Save expiry batches if provided
-            $this->saveExpiryBatches($stockItem, $itemData);
+            $this->saveExpiryBatches($po, $poItem, $stockItem, $itemData);
         }
     }
 
@@ -371,14 +372,18 @@ final class POSupplierService
      * Save expiry batches to stock_expiry_batches table
      * Called when supplier provides batch expiry information
      */
-    private function saveExpiryBatches(\Modules\V1\Stock\Models\StockItem $stockItem, array $itemData): void
-    {
+    private function saveExpiryBatches(
+        PurchaseOrder $po,
+        PurchaseOrderItem $poItem,
+        \Modules\V1\Stock\Models\StockItem $stockItem,
+        array $itemData
+    ): void {
         // Support both old and new field names
         $isSameExpiry = $itemData['isSameExpiry'] ?? $itemData['isSameExpired'] ?? false;
         $batches = $itemData['expiredBatches'] ?? [];
 
-        // Delete existing unprocessed batches for this item
-        \Modules\V1\Stock\Models\StockExpiryBatch::where('stock_item_id', $stockItem->id)
+        // Delete existing unprocessed batches for this PO item
+        \Modules\V1\Stock\Models\StockExpiryBatch::where('purchase_order_item_id', $poItem->id)
             ->where('is_processed', false)
             ->delete();
 
@@ -387,7 +392,11 @@ final class POSupplierService
             foreach ($batches as $batchData) {
                 \Modules\V1\Stock\Models\StockExpiryBatch::create([
                     'id' => \Illuminate\Support\Str::uuid(),
+                    'purchase_order_item_id' => $poItem->id,
+                    'purchase_order_id' => $po->id,
+                    'supplier_id' => $po->supplier_id,
                     'stock_item_id' => $stockItem->id,
+                    'item_name' => $stockItem->name, // Snapshot of item name at PO time
                     'batch_number' => $batchData['batchNumber'],
                     'quantity' => $batchData['quantity'],
                     'expiry_date' => $batchData['expiryDate'],
@@ -397,6 +406,9 @@ final class POSupplierService
             }
 
             Log::info("[PO Supplier Confirm] Saved expiry batches", [
+                'po_id' => $po->id,
+                'po_item_id' => $poItem->id,
+                'supplier_id' => $po->supplier_id,
                 'stock_item_id' => $stockItem->id,
                 'item_name' => $stockItem->name,
                 'total_batches' => count($batches),
@@ -428,14 +440,14 @@ final class POSupplierService
                 'current_status' => $po->status->value
             ]);
 
-            if ($po->status !== POStatusEnum::TERKIRIM) {
+            if ($po->status !== POStatusEnum::MENUNGGU_PERSETUJUAN_SUPPLIER) {
                 Log::error("[PO Supplier Reject] Invalid PO status", [
                     'po_id' => $poId,
                     'po_number' => $po->po_number,
                     'current_status' => $po->status->value,
-                    'expected_status' => POStatusEnum::TERKIRIM->value
+                    'expected_status' => POStatusEnum::MENUNGGU_PERSETUJUAN_SUPPLIER->value
                 ]);
-                throw new Exception('PO must be in TERKIRIM status');
+                throw new Exception('PO must be in MENUNGGU_PERSETUJUAN_SUPPLIER status');
             }
 
             // Validate cancelled items belong to this PO
@@ -525,14 +537,14 @@ final class POSupplierService
                 'current_status' => $po->status->value
             ]);
 
-            if ($po->status !== POStatusEnum::TERKIRIM) {
+            if ($po->status !== POStatusEnum::MENUNGGU_PERSETUJUAN_SUPPLIER) {
                 Log::error("[PO Supplier Cancel] Invalid PO status", [
                     'po_id' => $poId,
                     'po_number' => $po->po_number,
                     'current_status' => $po->status->value,
-                    'expected_status' => POStatusEnum::TERKIRIM->value
+                    'expected_status' => POStatusEnum::MENUNGGU_PERSETUJUAN_SUPPLIER->value
                 ]);
-                throw new Exception('PO must be in TERKIRIM status to be cancelled');
+                throw new Exception('PO must be in MENUNGGU_PERSETUJUAN_SUPPLIER status to be cancelled');
             }
 
             // Validate cancelled items belong to this PO

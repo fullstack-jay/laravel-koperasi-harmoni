@@ -132,7 +132,7 @@ final class POService
             );
         }
 
-        Log::info("[PO Send] Transitioning PO status to TERKIRIM", [
+        Log::info("[PO Send] Transitioning PO status to MENUNGGU_PERSETUJUAN_SUPPLIER", [
             'po_id' => $poId,
             'po_number' => $po->po_number,
             'from_status' => $po->status->value
@@ -140,7 +140,7 @@ final class POService
 
         $this->statusService->transitionStatus(
             $po,
-            POStatusEnum::TERKIRIM,
+            POStatusEnum::MENUNGGU_PERSETUJUAN_SUPPLIER,
             'PO sent to supplier',
             $userId
         );

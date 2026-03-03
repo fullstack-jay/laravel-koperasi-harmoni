@@ -45,7 +45,7 @@ final class POKoperasiReviewService
 
     /**
      * Koperasi edits PO (add/remove/update items) and resends to supplier
-     * Status: PERUBAHAN_HARGA → TERKIRIM (kirim ulang)
+     * Status: PERUBAHAN_HARGA → MENUNGGU_PERSETUJUAN_SUPPLIER (kirim ulang)
      */
     public function editAndResend(string $poId, array $data, ?string $userId = null): PurchaseOrder
     {
@@ -123,10 +123,10 @@ final class POKoperasiReviewService
                 $po->update(['estimated_total' => $estimatedTotal]);
             }
 
-            // Transition status back to TERKIRIM (resend to supplier)
+            // Transition status back to MENUNGGU_PERSETUJUAN_SUPPLIER (resend to supplier)
             $this->statusService->transitionStatus(
                 $po,
-                POStatusEnum::TERKIRIM,
+                POStatusEnum::MENUNGGU_PERSETUJUAN_SUPPLIER,
                 'Koperasi revised PO and resending to supplier',
                 $userId
             );

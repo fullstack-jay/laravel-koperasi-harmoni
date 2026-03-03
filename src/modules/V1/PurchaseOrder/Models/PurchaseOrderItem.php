@@ -6,6 +6,7 @@ namespace Modules\V1\PurchaseOrder\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\V1\Stock\Models\StockItem;
 use Shared\Models\BaseModel;
 
@@ -48,5 +49,15 @@ class PurchaseOrderItem extends BaseModel
     public function stockItem(): BelongsTo
     {
         return $this->belongsTo(StockItem::class, 'item_id');
+    }
+
+    /**
+     * Relationship: PO item has many expiry batches
+     */
+    public function expiryBatches(): HasMany
+    {
+        return $this->hasMany(\Modules\V1\Stock\Models\StockExpiryBatch::class, 'purchase_order_item_id')
+            ->orderBy('expiry_date', 'asc')
+            ->orderBy('batch_number', 'asc');
     }
 }

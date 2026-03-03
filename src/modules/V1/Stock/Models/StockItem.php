@@ -82,16 +82,6 @@ class StockItem extends BaseModel
     }
 
     /**
-     * Relationship: Stock item has many expiry batches
-     */
-    public function expiryBatches(): HasMany
-    {
-        return $this->hasMany(StockExpiryBatch::class, 'stock_item_id')
-            ->orderBy('expiry_date', 'asc')
-            ->orderBy('batch_number', 'asc');
-    }
-
-    /**
      * Relationship: Stock item has many alerts
      */
     public function alerts(): HasMany

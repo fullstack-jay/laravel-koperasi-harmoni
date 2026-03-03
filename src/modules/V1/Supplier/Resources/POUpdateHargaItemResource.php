@@ -18,6 +18,7 @@ class POUpdateHargaItemResource extends JsonResource
         return [
             'itemId' => $this->item_id,
             'itemName' => $this->whenLoaded('stockItem', fn() => $this->stockItem->name),
+            'category' => $this->whenLoaded('stockItem', fn() => $this->stockItem->category),
             'estimatedQty' => $this->estimated_qty,
             'receivedQty' => $this->actual_qty ?? 0,
             'estimatedPrice' => (float) $this->estimated_unit_price,

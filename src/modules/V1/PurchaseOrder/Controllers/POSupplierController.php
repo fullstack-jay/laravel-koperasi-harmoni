@@ -24,7 +24,7 @@ final class POSupplierController extends POBaseController
      * @OA\Post(
      *     path="/PurchaseOrders/{po}/Supplier/Confirm",
      *     summary="Supplier confirms PO with prices and expiry batch information",
-     *     description="Supplier confirms purchase order by providing actual prices, invoice number, and expiry batch information. If prices changed, the system will automatically update the buy_price in supplier_items master table and set price_updated_at to current timestamp. Expiry information will be saved to stock_items table. PO status will change to PERUBAHAN_HARGA if there are price changes, or DIKONFIRMASI_SUPPLIER if no changes.",
+     *     description="Supplier confirms purchase order by providing actual prices, invoice number, and expiry batch information. If prices changed, the system will automatically update the buy_price in supplier_items master table and set price_updated_at to current timestamp. Expiry information will be saved to stock_items table. PO status will change to PERUBAHAN_HARGA if there are price changes, or DIKONFIRMASI_SUPPLIER if no changes.\n\n**Pengecualian Validasi Expiry:** Item dengan kategori KMN atau KEMASAN dikecualikan dari pengisian informasi expiry (isSameExpiry, expiryDate, expiredBatches tidak wajib diisi).\n\n**Validasi expiredBatches:** Untuk item NON-KMN/KEMASAN, ketika isSameExpiry=false, total jumlah quantity dari SEMUA batch harus SAMA PERSIS dengan estimated_qty yang dipesan (tidak boleh lebih, tidak boleh kurang). Contoh: Jika Beras Premium 25 KG memiliki estimated_qty=50, dan supplier memberikan 2 batch: batch 1 qty=20, batch 2 qty=30, totalnya adalah 50 yang valid. Jika batch 1 qty=20 dan batch 2 qty=20, total=40 akan error (kurang). Jika batch 1 qty=30 dan batch 2 qty=30, total=60 akan error (lebih).",
      *     tags={"Purchase Orders"},
      *
      *     @OA\Parameter(
@@ -48,14 +48,13 @@ final class POSupplierController extends POBaseController
      *                 @OA\Property(property="invoiceNumber", type="string", example="INV-2026-001", description="Invoice number from supplier"),
      *                 @OA\Property(property="items", type="array", @OA\Items(
      *                     type="object",
-     *                     required={"itemId", "actualPrice", "isSameExpiry"},
+     *                     required={"itemId", "actualPrice"},
      *                     @OA\Property(property="itemId", type="string", format="uuid", description="Stock Item ID", example="a1321f01-a6a7-4a19-9013-d82b80cb2ffc"),
      *                     @OA\Property(property="actualPrice", type="number", format="float", example=15000, description="Actual price from supplier (will update buy_price in supplier_items master if different)"),
-     *                     @OA\Property(property="isSameExpiry", type="boolean", description="Whether all stock has same expiry date", example=true),
+     *                     @OA\Property(property="isSameExpiry", type="boolean", description="Whether all stock has same expiry date. Optional and only required for NON-KMN/KEMASAN items", example=true),
      *                     @OA\Property(property="expiryDate", type="string", format="date", description="Expiry date if isSameExpiry=true", example="2026-03-15", nullable=true),
      *                     @OA\Property(property="expiredBatches", type="array", @OA\Items(
      *                         type="object",
-     *                         required={"batchNumber", "quantity", "expiryDate"},
      *                         @OA\Property(property="batchNumber", type="integer", description="Batch number (1 = nearest expiry)", example=1),
      *                         @OA\Property(property="quantity", type="integer", description="Quantity in this batch", example=10),
      *                         @OA\Property(property="expiryDate", type="string", format="date", description="Expiry date for this batch", example="2026-03-02")

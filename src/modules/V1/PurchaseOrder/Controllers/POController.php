@@ -73,7 +73,7 @@ final class POController extends POBaseController
         $sortColumnDir = $request->input('sortColumnDir', 'desc');
         $search = $request->input('search', '');
 
-        $query = PurchaseOrder::with(['supplier', 'items.stockItem.expiryBatches']);
+        $query = PurchaseOrder::with(['supplier', 'items.stockItem', 'items.expiryBatches']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -142,7 +142,7 @@ final class POController extends POBaseController
      */
     public function show(PurchaseOrder $po)
     {
-        $po->load(['supplier', 'items.stockItem.expiryBatches', 'statusHistories']);
+        $po->load(['supplier', 'items.stockItem', 'items.expiryBatches', 'statusHistories']);
 
         return ResponseHelper::success(new POResource($po));
     }

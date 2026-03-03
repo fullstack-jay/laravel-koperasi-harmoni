@@ -48,7 +48,7 @@ final class POStatusService
         $timestamp = now();
 
         match ($status) {
-            POStatusEnum::TERKIRIM => $po->update(['sent_to_supplier_at' => $timestamp]),
+            POStatusEnum::MENUNGGU_PERSETUJUAN_SUPPLIER => $po->update(['sent_to_supplier_at' => $timestamp]),
             POStatusEnum::DIKONFIRMASI_SUPPLIER => $po->update(['confirmed_by_supplier_at' => $timestamp]),
             POStatusEnum::DIKONFIRMASI_KOPERASI => $po->update(['confirmed_by_koperasi_at' => $timestamp]),
             POStatusEnum::SELESAI => $po->update(['received_at' => $timestamp]),
@@ -60,7 +60,7 @@ final class POStatusService
     {
         return in_array($po->status, [
             POStatusEnum::DRAFT,
-            POStatusEnum::TERKIRIM,
+            POStatusEnum::MENUNGGU_PERSETUJUAN_SUPPLIER,
             POStatusEnum::DIKONFIRMASI_SUPPLIER,
             POStatusEnum::DIKONFIRMASI_KOPERASI,
         ]);
