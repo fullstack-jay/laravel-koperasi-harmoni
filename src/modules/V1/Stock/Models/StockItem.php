@@ -28,6 +28,12 @@ class StockItem extends BaseModel
         'scheduled_quantity',
         'scheduled_at',
         'scheduled_processed',
+        'is_same_expired',
+        'tanggal_expired',
+        'quantity_expired_terdekat',
+        'tanggal_expired_terdekat',
+        'quantity_expired_terjauh',
+        'tanggal_expired_terjauh',
         'supplier_id',
         'created_by',
         'updated_by',
@@ -43,6 +49,12 @@ class StockItem extends BaseModel
         'scheduled_quantity' => 'integer',
         'scheduled_at' => 'datetime',
         'scheduled_processed' => 'boolean',
+        'is_same_expired' => 'boolean',
+        'tanggal_expired' => 'date',
+        'quantity_expired_terdekat' => 'integer',
+        'tanggal_expired_terdekat' => 'date',
+        'quantity_expired_terjauh' => 'integer',
+        'tanggal_expired_terjauh' => 'date',
     ];
 
     /**
@@ -67,6 +79,16 @@ class StockItem extends BaseModel
     public function stockCards(): HasMany
     {
         return $this->hasMany(StockCard::class, 'item_id');
+    }
+
+    /**
+     * Relationship: Stock item has many expiry batches
+     */
+    public function expiryBatches(): HasMany
+    {
+        return $this->hasMany(StockExpiryBatch::class, 'stock_item_id')
+            ->orderBy('expiry_date', 'asc')
+            ->orderBy('batch_number', 'asc');
     }
 
     /**
@@ -107,5 +129,33 @@ class StockItem extends BaseModel
     public function isOutOfStock(): bool
     {
         return $this->current_stock <= 0;
+    }
+
+    /**
+     * Get expired information for display
+     */
+    public function getExpiredInfo(): array
+    {
+        if ($this->is_same_expired) {
+            return [
+                'type' => 'same',
+                'tanggal_expired' => $this->tanggal_expired?->format('d/m/Y'),
+                'quantity' => $this->current_stock,
+                'message' => "Semua stok expired pada: {$this->tanggal_expired->format('d/m/Y')}",
+            ];
+        } else {
+            return [
+                'type' => 'different',
+                'terdekat' => [
+                    'tanggal' => $this->tanggal_expired_terdekat?->format('d/m/Y'),
+                    'quantity' => $this->quantity_expired_terdekat,
+                ],
+                'terjauh' => [
+                    'tanggal' => $this->tanggal_expired_terjauh?->format('d/m/Y'),
+                    'quantity' => $this->quantity_expired_terjauh,
+                ],
+                'message' => "Stok memiliki berbagai tanggal expired (terdekat: {$this->tanggal_expired_terdekat->format('d/m/Y')}, terjauh: {$this->tanggal_expired_terjauh->format('d/m/Y')})",
+            ];
+        }
     }
 }

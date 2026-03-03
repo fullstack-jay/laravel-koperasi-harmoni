@@ -126,6 +126,9 @@ final class POSupplierService
                 'has_price_changes' => $hasPriceChanges
             ]);
 
+            // Always save expired tracking information regardless of price changes
+            $this->updateExpiredTracking($po->id, $items);
+
             // Transition status based on price changes
             if ($hasPriceChanges) {
                 // Price changed: needs koperasi review
@@ -187,7 +190,7 @@ final class POSupplierService
 
     /**
      * Update buy_price and price_updated_at in supplier_items master table
-     * and update buy_price and last_price_update_at in stock_items master table
+     * and update buy_price, last_price_update_at, and expired tracking in stock_items master table
      * when supplier confirms PO with price changes
      */
     private function updateSupplierItemPrices(string $poId, array $itemsData): void
@@ -226,10 +229,178 @@ final class POSupplierService
                     'price_updated_at' => now(),
                 ]);
 
-            // Update stock_items master table with new price and timestamp
-            $stockItem->update([
+            // Prepare expired tracking data
+            $expiredData = $this->prepareExpiredTrackingData($itemData);
+
+            Log::info("[PO Supplier Confirm] Updating stock item with expired tracking", [
+                'po_id' => $poId,
+                'item_id' => $poItem->item_id,
+                'item_name' => $stockItem->name,
+                'is_same_expired' => $expiredData['is_same_expired'],
+            ]);
+
+            // Update stock_items master table with new price, timestamp, and expired tracking
+            $stockItem->update(array_merge([
                 'buy_price' => $newPrice,
                 'last_price_update_at' => now(),
+            ], $expiredData));
+        }
+    }
+
+    /**
+     * Prepare expired tracking data array from request item data
+     * Supports both old format (isSameExpired) and new format (isSameExpiry with expiredBatches)
+     */
+    private function prepareExpiredTrackingData(array $itemData): array
+    {
+        // Support both old and new field names for backward compatibility
+        $isSameExpiry = $itemData['isSameExpiry'] ?? $itemData['isSameExpired'] ?? false;
+
+        $expiredData = [
+            'is_same_expired' => $isSameExpiry,
+        ];
+
+        if ($isSameExpiry) {
+            // If same expiry date
+            $expiryDate = $itemData['expiryDate'] ?? $itemData['tanggalExpired'] ?? null;
+
+            $expiredData['tanggal_expired'] = $expiryDate;
+            $expiredData['quantity_expired_terdekat'] = null;
+            $expiredData['tanggal_expired_terdekat'] = null;
+            $expiredData['quantity_expired_terjauh'] = null;
+            $expiredData['tanggal_expired_terjauh'] = null;
+
+            Log::info("[Prepare Expired Data] Same expiry date", [
+                'expiry_date' => $expiryDate,
+            ]);
+        } else {
+            // If different expiry dates - extract from expiredBatches array
+            $batches = $itemData['expiredBatches'] ?? [];
+
+            if (!empty($batches)) {
+                // Sort batches by expiry date to find nearest and furthest
+                usort($batches, function($a, $b) {
+                    return strtotime($a['expiryDate']) - strtotime($b['expiryDate']);
+                });
+
+                $nearestBatch = $batches[0];
+                $furthestBatch = $batches[count($batches) - 1];
+
+                $expiredData['tanggal_expired'] = null;
+                $expiredData['quantity_expired_terdekat'] = $nearestBatch['quantity'];
+                $expiredData['tanggal_expired_terdekat'] = $nearestBatch['expiryDate'];
+                $expiredData['quantity_expired_terjauh'] = $furthestBatch['quantity'];
+                $expiredData['tanggal_expired_terjauh'] = $furthestBatch['expiryDate'];
+
+                Log::info("[Prepare Expired Data] Different expiry dates from batches", [
+                    'nearest_expiry' => $nearestBatch['expiryDate'],
+                    'nearest_qty' => $nearestBatch['quantity'],
+                    'furthest_expiry' => $furthestBatch['expiryDate'],
+                    'furthest_qty' => $furthestBatch['quantity'],
+                    'total_batches' => count($batches),
+                ]);
+            } else {
+                // Fallback to old format if no batches provided
+                $expiredData['tanggal_expired'] = null;
+                $expiredData['quantity_expired_terdekat'] = $itemData['quantityExpiredTerdekat'] ?? 0;
+                $expiredData['tanggal_expired_terdekat'] = $itemData['tanggalExpiredTerdekat'] ?? null;
+                $expiredData['quantity_expired_terjauh'] = $itemData['quantityExpiredTerjauh'] ?? 0;
+                $expiredData['tanggal_expired_terjauh'] = $itemData['tanggalExpiredTerjauh'] ?? null;
+
+                Log::info("[Prepare Expired Data] Different expiry dates (old format)", [
+                    'nearest_expiry' => $itemData['tanggalExpiredTerdekat'] ?? null,
+                    'nearest_qty' => $itemData['quantityExpiredTerdekat'] ?? 0,
+                    'furthest_expiry' => $itemData['tanggalExpiredTerjauh'] ?? null,
+                    'furthest_qty' => $itemData['quantityExpiredTerjauh'] ?? 0,
+                ]);
+            }
+        }
+
+        return $expiredData;
+    }
+
+    /**
+     * Update expired tracking information in stock_items master table
+     * Called during PO confirmation regardless of price changes
+     */
+    private function updateExpiredTracking(string $poId, array $itemsData): void
+    {
+        $po = PurchaseOrder::find($poId);
+
+        if (!$po) {
+            return;
+        }
+
+        // Get all PO items
+        $poItems = PurchaseOrderItem::where('purchase_order_id', $poId)->get();
+
+        foreach ($poItems as $poItem) {
+            // Find the corresponding item data from request
+            $itemData = collect($itemsData)->firstWhere('itemId', $poItem->item_id);
+
+            if (!$itemData) {
+                continue;
+            }
+
+            // Find stock item
+            $stockItem = \Modules\V1\Stock\Models\StockItem::find($poItem->item_id);
+
+            if (!$stockItem) {
+                continue;
+            }
+
+            // Prepare expired tracking data
+            $expiredData = $this->prepareExpiredTrackingData($itemData);
+
+            Log::info("[PO Supplier Confirm] Updating stock item with expired tracking", [
+                'po_id' => $poId,
+                'item_id' => $poItem->item_id,
+                'item_name' => $stockItem->name,
+                'is_same_expired' => $expiredData['is_same_expired'],
+            ]);
+
+            // Update stock_items master table with expired tracking only
+            $stockItem->update($expiredData);
+
+            // Save expiry batches if provided
+            $this->saveExpiryBatches($stockItem, $itemData);
+        }
+    }
+
+    /**
+     * Save expiry batches to stock_expiry_batches table
+     * Called when supplier provides batch expiry information
+     */
+    private function saveExpiryBatches(\Modules\V1\Stock\Models\StockItem $stockItem, array $itemData): void
+    {
+        // Support both old and new field names
+        $isSameExpiry = $itemData['isSameExpiry'] ?? $itemData['isSameExpired'] ?? false;
+        $batches = $itemData['expiredBatches'] ?? [];
+
+        // Delete existing unprocessed batches for this item
+        \Modules\V1\Stock\Models\StockExpiryBatch::where('stock_item_id', $stockItem->id)
+            ->where('is_processed', false)
+            ->delete();
+
+        // Only save batches if isSameExpiry is false and batches are provided
+        if (!$isSameExpiry && !empty($batches)) {
+            foreach ($batches as $batchData) {
+                \Modules\V1\Stock\Models\StockExpiryBatch::create([
+                    'id' => \Illuminate\Support\Str::uuid(),
+                    'stock_item_id' => $stockItem->id,
+                    'batch_number' => $batchData['batchNumber'],
+                    'quantity' => $batchData['quantity'],
+                    'expiry_date' => $batchData['expiryDate'],
+                    'is_processed' => false,
+                    'processed_at' => null,
+                ]);
+            }
+
+            Log::info("[PO Supplier Confirm] Saved expiry batches", [
+                'stock_item_id' => $stockItem->id,
+                'item_name' => $stockItem->name,
+                'total_batches' => count($batches),
+                'batches' => $batches,
             ]);
         }
     }
@@ -502,6 +673,7 @@ final class POSupplierService
      * Update current_stock in stock_items table from cancelled items
      * This updates the current_stock field with the quantity provided by supplier
      * Also stores scheduled stock info if availableDate is provided
+     * Stores expired tracking information for stock items
      * Dispatches a delayed job to process scheduled stock when time comes
      */
     private function updateCurrentStockFromCancelledItems(array $cancelledItems): void
@@ -519,13 +691,11 @@ final class POSupplierService
             $oldStock = $stockItem->current_stock;
             $newStock = $item['quantity'] ?? 0;
 
-            // Parse availableDate if exists (format: "04/03/2026 pukul 22:58")
+            // Parse availableDate if provided (format: "2026-03-04" or ISO date format)
             $scheduledAt = null;
             if (isset($item['availableDate']) && !empty($item['availableDate'])) {
-                // Parse Indonesian date format: "04/03/2026 pukul 22:58"
-                $dateString = str_replace(' pukul ', ' ', $item['availableDate']);
                 try {
-                    $scheduledAt = \Carbon\Carbon::createFromFormat('d/m/Y H:i', trim($dateString));
+                    $scheduledAt = \Carbon\Carbon::parse($item['availableDate']);
                     Log::info("[Update Current Stock] Parsed scheduled date", [
                         'item_id' => $item['itemId'],
                         'item_name' => $stockItem->name,
@@ -533,58 +703,86 @@ final class POSupplierService
                         'parsed_at' => $scheduledAt->toDateTimeString()
                     ]);
                 } catch (\Exception $e) {
-                    // If parsing fails, try another format or set to null
-                    try {
-                        $scheduledAt = \Carbon\Carbon::parse($item['availableDate']);
-                        Log::info("[Update Current Stock] Parsed scheduled date (fallback)", [
-                            'item_id' => $item['itemId'],
-                            'item_name' => $stockItem->name,
-                            'available_date' => $item['availableDate'],
-                            'parsed_at' => $scheduledAt->toDateTimeString()
-                        ]);
-                    } catch (\Exception $e2) {
-                        Log::error("[Update Current Stock] Failed to parse scheduled date", [
-                            'item_id' => $item['itemId'],
-                            'item_name' => $stockItem->name,
-                            'available_date' => $item['availableDate'],
-                            'error' => $e2->getMessage()
-                        ]);
-                        $scheduledAt = null;
-                    }
+                    Log::error("[Update Current Stock] Failed to parse scheduled date", [
+                        'item_id' => $item['itemId'],
+                        'item_name' => $stockItem->name,
+                        'available_date' => $item['availableDate'],
+                        'error' => $e->getMessage()
+                    ]);
+                    $scheduledAt = null;
                 }
             }
 
-            // Calculate scheduled quantity (how much will be added)
+            // Get scheduled quantity from stokBertambah field
+            // This is the quantity that will be added to current_stock in the future
             $scheduledQuantity = 0;
-            if ($scheduledAt && isset($item['estimatedQty']) && isset($item['quantity'])) {
-                // scheduled_quantity = estimated_qty - current_available_qty
-                $scheduledQuantity = max(0, $item['estimatedQty'] - $item['quantity']);
+            if (isset($item['stokBertambah']) && $item['stokBertambah'] > 0) {
+                $scheduledQuantity = (int) $item['stokBertambah'];
 
-                Log::info("[Update Current Stock] Calculated scheduled quantity", [
+                Log::info("[Update Current Stock] Scheduled quantity provided", [
                     'item_id' => $item['itemId'],
                     'item_name' => $stockItem->name,
-                    'estimated_qty' => $item['estimatedQty'],
-                    'current_available_qty' => $item['quantity'],
-                    'scheduled_quantity' => $scheduledQuantity,
-                    'scheduled_for' => $scheduledAt->toDateTimeString()
+                    'stok_bertambah' => $scheduledQuantity,
+                    'scheduled_for' => $scheduledAt ? $scheduledAt->toDateTimeString() : 'not set',
+                    'note' => $scheduledAt
+                        ? 'This stock will be added to current_stock on scheduled date'
+                        : 'WARNING: stokBertambah provided but no availableDate set'
                 ]);
             }
 
-            // Update stock item with current stock and scheduled stock info
-            $stockItem->update([
+            // Prepare expired tracking data
+            $expiredData = [
+                'is_same_expired' => $item['isSameExpired'] ?? false,
+            ];
+
+            if ($item['isSameExpired']) {
+                // If same expiry date
+                $expiredData['tanggal_expired'] = $item['tanggalExpired'] ?? null;
+                $expiredData['quantity_expired_terdekat'] = null;
+                $expiredData['tanggal_expired_terdekat'] = null;
+                $expiredData['quantity_expired_terjauh'] = null;
+                $expiredData['tanggal_expired_terjauh'] = null;
+
+                Log::info("[Update Current Stock] Processing same expired date", [
+                    'item_id' => $item['itemId'],
+                    'item_name' => $stockItem->name,
+                    'tanggal_expired' => $item['tanggalExpired'] ?? null,
+                ]);
+            } else {
+                // If different expiry dates
+                $expiredData['tanggal_expired'] = null;
+                $expiredData['quantity_expired_terdekat'] = $item['quantityExpiredTerdekat'] ?? 0;
+                $expiredData['tanggal_expired_terdekat'] = $item['tanggalExpiredTerdekat'] ?? null;
+                $expiredData['quantity_expired_terjauh'] = $item['quantityExpiredTerjauh'] ?? 0;
+                $expiredData['tanggal_expired_terjauh'] = $item['tanggalExpiredTerjauh'] ?? null;
+
+                Log::info("[Update Current Stock] Processing different expired dates", [
+                    'item_id' => $item['itemId'],
+                    'item_name' => $stockItem->name,
+                    'nearest_expiry' => $item['tanggalExpiredTerdekat'] ?? null,
+                    'nearest_qty' => $item['quantityExpiredTerdekat'] ?? 0,
+                    'furthest_expiry' => $item['tanggalExpiredTerjauh'] ?? null,
+                    'furthest_qty' => $item['quantityExpiredTerjauh'] ?? 0,
+                ]);
+            }
+
+            // Update stock item with current stock, scheduled stock info, and expired tracking
+            $stockItem->update(array_merge([
                 'current_stock' => $newStock,
                 'scheduled_quantity' => $scheduledQuantity > 0 ? $scheduledQuantity : null,
                 'scheduled_at' => $scheduledAt,
                 'scheduled_processed' => false,
-            ]);
+            ], $expiredData));
 
-            Log::info("[Update Current Stock] Updated stock item", [
+            Log::info("[Update Current Stock] Updated stock item with expired tracking", [
                 'item_id' => $item['itemId'],
                 'item_name' => $stockItem->name,
                 'old_stock' => $oldStock,
                 'new_stock' => $newStock,
                 'scheduled_quantity' => $scheduledQuantity > 0 ? $scheduledQuantity : null,
-                'scheduled_at' => $scheduledAt ? $scheduledAt->toDateTimeString() : null
+                'scheduled_at' => $scheduledAt ? $scheduledAt->toDateTimeString() : null,
+                'is_same_expired' => $expiredData['is_same_expired'],
+                'tanggal_expired' => $expiredData['tanggal_expired'] ?? null,
             ]);
 
             // Dispatch delayed job if scheduled stock exists

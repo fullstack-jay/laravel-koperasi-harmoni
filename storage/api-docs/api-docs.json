@@ -3072,8 +3072,8 @@
                 "tags": [
                     "Purchase Orders"
                 ],
-                "summary": "Supplier confirms PO with prices",
-                "description": "Supplier confirms purchase order by providing actual prices and invoice number. If prices changed, the system will automatically update the buy_price in supplier_items master table and set price_updated_at to current timestamp. PO status will change to PERUBAHAN_HARGA if there are price changes, or DIKONFIRMASI_SUPPLIER if no changes.",
+                "summary": "Supplier confirms PO with prices and expiry batch information",
+                "description": "Supplier confirms purchase order by providing actual prices, invoice number, and expiry batch information. If prices changed, the system will automatically update the buy_price in supplier_items master table and set price_updated_at to current timestamp. Expiry information will be saved to stock_items table. PO status will change to PERUBAHAN_HARGA if there are price changes, or DIKONFIRMASI_SUPPLIER if no changes.",
                 "operationId": "ce6a1db56ca7f72813af2610bcfdbc93",
                 "parameters": [
                     {
@@ -3106,19 +3106,62 @@
                                         "items": {
                                             "required": [
                                                 "itemId",
-                                                "actualPrice"
+                                                "actualPrice",
+                                                "isSameExpiry"
                                             ],
                                             "properties": {
                                                 "itemId": {
                                                     "description": "Stock Item ID",
                                                     "type": "string",
-                                                    "format": "uuid"
+                                                    "format": "uuid",
+                                                    "example": "a1321f01-a6a7-4a19-9013-d82b80cb2ffc"
                                                 },
                                                 "actualPrice": {
-                                                    "description": "Actual price from supplier (will update buy_price in supplier_items master if different from estimated price)",
+                                                    "description": "Actual price from supplier (will update buy_price in supplier_items master if different)",
                                                     "type": "number",
                                                     "format": "float",
                                                     "example": 15000
+                                                },
+                                                "isSameExpiry": {
+                                                    "description": "Whether all stock has same expiry date",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "expiryDate": {
+                                                    "description": "Expiry date if isSameExpiry=true",
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2026-03-15",
+                                                    "nullable": true
+                                                },
+                                                "expiredBatches": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "required": [
+                                                            "batchNumber",
+                                                            "quantity",
+                                                            "expiryDate"
+                                                        ],
+                                                        "properties": {
+                                                            "batchNumber": {
+                                                                "description": "Batch number (1 = nearest expiry)",
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "quantity": {
+                                                                "description": "Quantity in this batch",
+                                                                "type": "integer",
+                                                                "example": 10
+                                                            },
+                                                            "expiryDate": {
+                                                                "description": "Expiry date for this batch",
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "example": "2026-03-02"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
                                                 }
                                             },
                                             "type": "object"
@@ -3132,7 +3175,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "PO confirmed successfully. If prices changed: status=PERUBAHAN_HARGA, buy_price updated in supplier_items, price_updated_at set. If no changes: status=DIKONFIRMASI_SUPPLIER"
+                        "description": "PO confirmed successfully. If prices changed: status=PERUBAHAN_HARGA, buy_price updated in supplier_items, price_updated_at set. If no changes: status=DIKONFIRMASI_SUPPLIER. Expiry info saved to stock_items."
                     }
                 },
                 "security": [
@@ -6051,7 +6094,7 @@
             },
             "SupplierCancelRequest": {
                 "title": "Supplier Cancel PO Request",
-                "description": "Schema for supplier cancelling purchase order with detailed cancellation information",
+                "description": "Schema for supplier cancelling purchase order with detailed cancellation information and expired tracking",
                 "required": [
                     "cancelItems"
                 ],
@@ -6070,7 +6113,8 @@
                                 "itemName",
                                 "estimatedQty",
                                 "unit",
-                                "reason"
+                                "reason",
+                                "quantity"
                             ],
                             "properties": {
                                 "itemId": {
@@ -6104,9 +6148,55 @@
                                     "example": "STOK_TERSISA"
                                 },
                                 "quantity": {
-                                    "description": "Available quantity (required for STOK_TERSISA, optional for STOK_HABIS)",
+                                    "description": "Current available quantity",
                                     "type": "integer",
                                     "example": 5
+                                },
+                                "stokBertambah": {
+                                    "description": "Scheduled quantity that will be added to current_stock in the future",
+                                    "type": "integer",
+                                    "example": 60,
+                                    "nullable": true
+                                },
+                                "isSameExpired": {
+                                    "description": "Whether all stock has same expiry date",
+                                    "type": "boolean",
+                                    "example": true
+                                },
+                                "tanggalExpired": {
+                                    "description": "Expiry date if isSameExpired=true",
+                                    "type": "string",
+                                    "format": "date",
+                                    "example": "2026-06-15"
+                                },
+                                "quantityExpiredTerdekat": {
+                                    "description": "Quantity for nearest expiry date",
+                                    "type": "integer",
+                                    "example": 30
+                                },
+                                "tanggalExpiredTerdekat": {
+                                    "description": "Nearest expiry date",
+                                    "type": "string",
+                                    "format": "date",
+                                    "example": "2026-06-15"
+                                },
+                                "quantityExpiredTerjauh": {
+                                    "description": "Quantity for furthest expiry date",
+                                    "type": "integer",
+                                    "example": 20
+                                },
+                                "tanggalExpiredTerjauh": {
+                                    "description": "Furthest expiry date",
+                                    "type": "string",
+                                    "format": "date",
+                                    "example": "2026-08-20"
+                                },
+                                "availableDate": {
+                                    "description": "When the scheduled stock will be available (will populate scheduled_at field)",
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "example": "2026-03-04T22:58:00Z",
+                                    "nullable": true
                                 }
                             },
                             "type": "object"
@@ -6116,6 +6206,87 @@
                         "description": "Detailed cancellation message",
                         "type": "string",
                         "example": "Mohon maaf, untuk PO-001 berikut item yang tidak dapat dipenuhi..."
+                    }
+                },
+                "type": "object"
+            },
+            "SupplierConfirmRequest": {
+                "title": "Supplier Confirm PO Request",
+                "description": "Schema for supplier confirming purchase order with prices and expiry batch information",
+                "required": [
+                    "items"
+                ],
+                "properties": {
+                    "invoiceNumber": {
+                        "description": "Invoice number from supplier",
+                        "type": "string",
+                        "example": "INV-2026-001"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "itemId",
+                                "actualPrice",
+                                "isSameExpiry"
+                            ],
+                            "properties": {
+                                "itemId": {
+                                    "description": "Stock Item ID",
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "example": "a1321f01-a6a7-4a19-9013-d82b80cb2ffc"
+                                },
+                                "actualPrice": {
+                                    "description": "Actual price from supplier (will update buy_price in supplier_items master if different from estimated price)",
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 15000
+                                },
+                                "isSameExpiry": {
+                                    "description": "Whether all stock has same expiry date",
+                                    "type": "boolean",
+                                    "example": true
+                                },
+                                "expiryDate": {
+                                    "description": "Expiry date if isSameExpiry=true",
+                                    "type": "string",
+                                    "format": "date",
+                                    "example": "2026-03-15",
+                                    "nullable": true
+                                },
+                                "expiredBatches": {
+                                    "type": "array",
+                                    "items": {
+                                        "required": [
+                                            "batchNumber",
+                                            "quantity",
+                                            "expiryDate"
+                                        ],
+                                        "properties": {
+                                            "batchNumber": {
+                                                "description": "Batch number",
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "quantity": {
+                                                "description": "Quantity in this batch",
+                                                "type": "integer",
+                                                "example": 10
+                                            },
+                                            "expiryDate": {
+                                                "description": "Expiry date for this batch",
+                                                "type": "string",
+                                                "format": "date",
+                                                "example": "2026-03-02"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
                     }
                 },
                 "type": "object"
