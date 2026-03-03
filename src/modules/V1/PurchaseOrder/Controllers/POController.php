@@ -75,11 +75,11 @@ final class POController extends POBaseController
 
         $query = PurchaseOrder::with(['supplier', 'items.stockItem.expiryBatches']);
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->has('supplier_id')) {
+        if ($request->filled('supplier_id')) {
             $query->where('supplier_id', $request->supplier_id);
         }
 
